@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Join: {{ ind.title }}{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <p class="small muted">{{ ind.location }}</p>
+  <h1>{{ ind.title }}</h1>
+  {% if ind.description %}<p>{{ ind.description }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/j/{{ s.code }}" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Full name <input name="name" value="{{ name or '' }}" required autocomplete="name"></label>
+    <label>Email <input name="email" type="email" value="{{ email or '' }}" required autocomplete="email" placeholder="Use your University email if you have one"></label>
+    <label>UniKey <input name="unikey" value="{{ unikey or '' }}" required autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z]{2,8}[0-9]{1,6}" placeholder="e.g. abcd1234"> <span class="small muted" style="font-weight:400">Your University of Sydney UniKey, usually 4 letters then 4 digits.</span></label>
+    <label>Role
+      <select name="role">
+        <option value="">Choose…</option>
+        {% for r in roles %}<option {% if role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="btn">Start</button>
+  </form>
+  <p class="small muted">Your name, email, UniKey and induction record are kept by the Sydney Propulsion Lab for WHS record keeping.</p>
+</div>
+{% endblock %}

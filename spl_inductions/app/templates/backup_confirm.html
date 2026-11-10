@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_summary.html" import summary_rows %}
+{% block title %}Confirm restore{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="{{ '/setup' if setup else '/backup' }}">&larr; {{ 'Set up' if setup else 'Backup' }}</a></p>
+<h1>Restore this backup?</h1>
+{% if setup %}
+<p>From <strong>{{ source }}</strong>. This is what the backup holds. Restoring brings all of it back, including assessor accounts and passwords.</p>
+<section class="card highlight narrow-form"><h2>Backup</h2><table class="kv">{{ summary_rows(incoming) }}</table></section>
+{% else %}
+<p>From <strong>{{ source }}</strong>. Check the numbers: restoring replaces <em>everything</em> in the current database with the backup.</p>
+<div class="grid-2">
+  <section class="card"><h2>Current database</h2><table class="kv">{{ summary_rows(current) }}</table></section>
+  <section class="card highlight"><h2>Backup</h2><table class="kv">{{ summary_rows(incoming) }}</table></section>
+</div>
+{% endif %}
+<section class="card">
+  <form method="post" action="{{ '/setup/restore/confirm' if setup else '/backup/restore' }}" class="stack narrow-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="name" value="{{ backup_name }}">
+    {% if not setup %}<p class="small">The current database will be saved as a safety copy first. Anything recorded since the backup was made will only be in that safety copy.</p>{% endif %}
+    <label><span>Type <strong>RESTORE</strong> to confirm</span> <input name="confirm" autocomplete="off" required pattern="RESTORE"></label>
+    <button class="btn danger">Restore backup</button>
+  </form>
+</section>
+{% endblock %}

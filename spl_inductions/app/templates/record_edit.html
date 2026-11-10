@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Edit record {{ r.id }}{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/records/{{ r.id }}">&larr; Record {{ r.id }}</a></p>
+<div class="card">
+  <h1>Edit record</h1>
+  <p class="muted">{{ r.person_name }} ({{ r.person_email }}){% if r.entry_method != 'manual' %} · done in the app, so the checklist and signatures can't be changed{% endif %}. To change the person's name or email, <a href="/people/{{ r.person_id }}/edit">edit their details</a>.</p>
+  {% if errors %}<div class="error">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <form method="post" action="/records/{{ r.id }}/edit" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if r.entry_method == 'manual' %}
+    <label>Induction
+      <select name="induction_id" required>
+        {% set ns = namespace(found=false) %}
+        {% for row, ind in inductions %}{% if row.id == f.induction_id %}{% set ns.found = true %}{% endif %}<option value="{{ row.id }}" {% if row.id == f.induction_id %}selected{% endif %}>{{ ind.title }} ({{ ind.location }})</option>{% endfor %}
+        {% if not ns.found %}<option value="{{ f.induction_id }}" selected>{{ f.induction_id }} (retired)</option>{% endif %}
+      </select>
+    </label>
+    {% endif %}
+    <label>Date of induction <input name="induction_date" type="date" value="{{ f.induction_date }}" max="{{ today }}" required></label>
+    <label>Done by
+      <select name="assessor_id" id="assessor">
+        {% for a in assessors %}<option value="{{ a.id }}" {% if f.assessor_id == a.id|string %}selected{% endif %}>{{ a.name }}{% if not a.active %} (inactive){% endif %}</option>{% endfor %}
+        <option value="other" {% if f.assessor_id == 'other' %}selected{% endif %}>Someone else…</option>
+      </select>
+    </label>
+    <label id="assessor-text-row" {% if f.assessor_id != 'other' %}hidden{% endif %}>Their name <input name="assessor_text" value="{{ f.assessor_text }}" autocomplete="off"></label>
+    <label>Refresh after (months, 0 for no expiry) <input name="refresh_months" type="number" min="0" max="120" value="{{ f.refresh_months }}" required></label>
+    <label>Notes <textarea name="notes" rows="3">{{ f.notes }}</textarea></label>
+    <label>Reason for the change <input name="reason" value="{{ f.reason }}" required placeholder="e.g. wrong date entered" autocomplete="off"></label>
+    <button class="btn">Save changes</button>
+  </form>
+  <p class="small muted">The old and new values and your reason are kept in the record's history.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var who = document.getElementById('assessor'), row = document.getElementById('assessor-text-row');
+  who.addEventListener('change', function () { row.hidden = who.value !== 'other'; });
+})();
+</script>
+{% endblock %}

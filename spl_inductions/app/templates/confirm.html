@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Confirm your induction{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Confirm your induction</h1>
+  <table class="kv">
+    <tr><th>Name</th><td>{{ r.person_name }}</td></tr>
+    <tr><th>Induction</th><td>{{ ind.title }}, {{ ind.location }}</td></tr>
+    <tr><th>Assessor</th><td>{{ r.assessor_name }}</td></tr>
+    <tr><th>Signed off</th><td>{{ r.assessor_signed_at|local }}</td></tr>
+  </table>
+  <form method="post" action="/c/{{ token }}">
+    <button class="btn">I confirm I completed this induction</button>
+  </form>
+  <p class="small muted">If you were not inducted, close this page and let SPL staff know.</p>
+</div>
+{% endblock %}

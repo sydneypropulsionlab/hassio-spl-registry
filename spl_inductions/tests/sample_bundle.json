@@ -1,0 +1,691 @@
+{
+  "format": 1,
+  "generated_at": "2026-10-29T03:41:00+00:00",
+  "inductions": [
+    {
+      "id": "IND_J11_N209B_SPACE",
+      "title": "SPL lab induction (N209B)",
+      "type": "space",
+      "location": "J11 N209B",
+      "description": "Induction to the Sydney Propulsion Lab in room N209B: WHS responsibilities, emergencies, the main hazards in the lab, machinery, and the lab rules. It does not authorise you to operate the wind tunnel or use LiPo batteries; both need separate inductions or training.",
+      "refresh_months": 24,
+      "self_service": false,
+      "grants_access": [
+        "J11 N209B"
+      ],
+      "sources": [],
+      "sections": [
+        {
+          "title": "General",
+          "items": [
+            {
+              "id": "1.1",
+              "kind": "check",
+              "text": "Test Entry",
+              "refs": []
+            },
+            {
+              "id": "1.2",
+              "kind": "check",
+              "text": "General WHS responsibilities under the University's WHS policy: http://sydney.edu.au/whs/policies/index.shtml",
+              "refs": []
+            },
+            {
+              "id": "1.3",
+              "kind": "ack",
+              "text": "There must always be at least two inducted people in the lab during safety-critical tests or out-of-hours work. I will only work alone with special permission from the Area Supervisor.",
+              "refs": []
+            },
+            {
+              "id": "1.4",
+              "kind": "check",
+              "text": "Local safety contacts: Departmental Safety Officer, Rod Fiford, 9351 8923. The First Aid Officers and Emergency Warden are listed on the \"Authorised Entry Only\" signs at the entrance.",
+              "refs": []
+            },
+            {
+              "id": "1.5",
+              "kind": "check",
+              "text": "Reporting maintenance issues with buildings and grounds through Campus Assist: https://campusassist.sydney.edu.au",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Emergencies",
+          "items": [
+            {
+              "id": "2.1",
+              "kind": "info",
+              "text": "University emergency information: http://sydney.edu.au/whs/emergency/index.shtml",
+              "refs": []
+            },
+            {
+              "id": "2.2",
+              "kind": "check",
+              "text": "Building alarm tones: \"beep beep beep\" means shut the experiment down and prepare to evacuate; \"whoop whoop whoop\" means evacuate immediately. Emergency evacuation details are covered in site-specific inductions.",
+              "refs": []
+            },
+            {
+              "id": "2.3",
+              "kind": "check",
+              "text": "First Aid Officers in the building: see the \"Authorised Entry Only\" signs at the entrance for current contacts.",
+              "refs": []
+            },
+            {
+              "id": "2.4",
+              "kind": "check",
+              "text": "Reporting emergencies and security threats to Sydney Campus Security: 9351 3333.",
+              "refs": []
+            },
+            {
+              "id": "2.5",
+              "kind": "check",
+              "text": "Reporting incidents, injuries, illness and hazards in RiskWare: http://sydney.edu.au/whs/report/index.shtml",
+              "refs": []
+            },
+            {
+              "id": "2.6",
+              "kind": "ack",
+              "text": "All incidents must be formally recorded in RiskWare within 24 hours of the incident occurring.",
+              "refs": []
+            },
+            {
+              "id": "2.7",
+              "kind": "check",
+              "text": "Nearest fire exits shown: the door at the rear of the Bennett lab near the roller door (primary), and the main entrance (secondary).",
+              "refs": []
+            },
+            {
+              "id": "2.8",
+              "kind": "check",
+              "text": "Emergency assembly point: Old School Building, Cadigal Green.",
+              "refs": []
+            },
+            {
+              "id": "2.9",
+              "kind": "check",
+              "text": "Electric shock: ensure your own safety first and do not risk a shock yourself, isolate the power supply if possible, and call for assistance immediately on Sydney Campus Security 9351 3333.",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Job specific hazards",
+          "items": [
+            {
+              "id": "3.1",
+              "kind": "check",
+              "text": "The main WHS risks in the lab.",
+              "refs": []
+            },
+            {
+              "id": "3.2",
+              "kind": "check",
+              "text": "Safe work procedures relevant to the inductee's work.",
+              "refs": []
+            },
+            {
+              "id": "3.3",
+              "kind": "ack",
+              "text": "I will comply with local WHS rules and procedures.",
+              "refs": []
+            },
+            {
+              "id": "3.4",
+              "kind": "check",
+              "text": "WHS resources, including the WHS website: http://www.sydney.edu.au/whs/",
+              "refs": []
+            },
+            {
+              "id": "3.5",
+              "kind": "check",
+              "text": "Local procedures for minimising manual handling risks: http://sydney.edu.au/whs/guidelines/manual_handling/index.shtml",
+              "refs": []
+            },
+            {
+              "id": "3.6",
+              "kind": "ack",
+              "text": "Any substance used in the lab, including adhesives, cleaning products and paints, needs a safety check before use. No chemicals or substances go down the drain; disposal is arranged through the Area Supervisor.",
+              "refs": []
+            },
+            {
+              "id": "3.7",
+              "kind": "check",
+              "text": "Asked whether the inductee has any special needs or existing health conditions to be accommodated. Don't record details in this app.",
+              "refs": []
+            },
+            {
+              "id": "3.8",
+              "kind": "ack",
+              "text": "Hearing protection must be worn during all noisy lab operations, including wind tunnel runs and propulsion testing. Hearing protection is available in the lab.",
+              "refs": []
+            },
+            {
+              "id": "3.9",
+              "kind": "check",
+              "text": "WHS training needs specific to the inductee's role identified and arranged.",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Machinery",
+          "items": [
+            {
+              "id": "4.1",
+              "kind": "check",
+              "text": "Wind tunnel hazards: electric shock, and crushing from moving test sections. Never operate the wind tunnel while the test section is open.",
+              "refs": []
+            },
+            {
+              "id": "4.2",
+              "kind": "check",
+              "text": "Propellers and motors are a rotating machinery hazard: never reach into or cross the plane of a spinning propeller, keep a safe distance during spin-up and operation, and clear all personnel before powering.",
+              "refs": []
+            },
+            {
+              "id": "4.3",
+              "kind": "check",
+              "text": "No loose clothing or unsecured items near rotating assemblies.",
+              "refs": []
+            },
+            {
+              "id": "4.4",
+              "kind": "check",
+              "text": "When a propeller or motor is tested outside the tunnel, a safety shield must be in place before powering.",
+              "refs": []
+            },
+            {
+              "id": "4.5",
+              "kind": "check",
+              "text": "Do not handle motors immediately after operation: allow time to cool and confirm power is isolated.",
+              "refs": []
+            },
+            {
+              "id": "4.6",
+              "kind": "ack",
+              "text": "I will not use LiPo batteries until I have completed the specific LiPo battery safety training. I will see my supervisor to arrange it.",
+              "refs": []
+            },
+            {
+              "id": "4.7",
+              "kind": "check",
+              "text": "Risk assessment before working with machinery: check nothing is loose, and if something looks amiss, say something. A Risk Assessment must be filled out before conducting a test campaign.",
+              "refs": []
+            },
+            {
+              "id": "4.8",
+              "kind": "check",
+              "text": "Safe work methods for the machinery explained and demonstrated, including the location and operation of the emergency stop buttons. The Wind Tunnel Drive operations manual is near the computer.",
+              "refs": []
+            },
+            {
+              "id": "4.9",
+              "kind": "check",
+              "text": "Where to find the instruction manuals for the machinery being used.",
+              "refs": []
+            },
+            {
+              "id": "4.10",
+              "kind": "check",
+              "text": "Personal protective equipment obtained: hearing protection.",
+              "refs": []
+            },
+            {
+              "id": "4.11",
+              "kind": "ack",
+              "text": "I will not operate the wind tunnel until I have completed the separate wind tunnel induction, arranged with the wind tunnel area manager.",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Lab rules",
+          "items": [
+            {
+              "id": "5.1",
+              "kind": "ack",
+              "text": "Keep a clean, productive workspace. Anything without a name, phone number and date will be disposed of.",
+              "refs": []
+            },
+            {
+              "id": "5.2",
+              "kind": "ack",
+              "text": "Sticky tape (or similar) is not to be used on any lab infrastructure or equipment.",
+              "refs": []
+            },
+            {
+              "id": "5.3",
+              "kind": "ack",
+              "text": "Everything must be secured appropriately, preferably mechanically.",
+              "refs": []
+            },
+            {
+              "id": "5.4",
+              "kind": "ack",
+              "text": "Contribute to space maintenance, including emptying rubbish and sweeping floors.",
+              "refs": []
+            },
+            {
+              "id": "5.5",
+              "kind": "ack",
+              "text": "At the end of testing, leave the lab clean for the next user, including removing all equipment, models and materials from the bench area.",
+              "refs": []
+            },
+            {
+              "id": "5.6",
+              "kind": "ack",
+              "text": "No wind tunnel testing is approved for WHS purposes unless it has been approved through the wind tunnel calendar booking system.",
+              "refs": []
+            },
+            {
+              "id": "5.7",
+              "kind": "ack",
+              "text": "Return all equipment to its designated storage location after use. Unidentified or abandoned items will be removed.",
+              "refs": []
+            },
+            {
+              "id": "5.8",
+              "kind": "ack",
+              "text": "Headphones and earphones are prohibited in the lab. Hearing protection is the only permitted in-ear device: I must be able to hear alarms and communicate at all times.",
+              "refs": []
+            }
+          ]
+        }
+      ],
+      "version": "bded8df8f60f"
+    },
+    {
+      "id": "IND_J11_S120_FORM4",
+      "title": "Formlabs Form 4 induction",
+      "type": "equipment",
+      "location": "J11 S120",
+      "description": "Practical induction on the Formlabs Form 4 resin printer, Form Wash and Form Cure. The assessor covers each item with you and you demonstrate the practical tasks before sign-off.",
+      "refresh_months": 12,
+      "self_service": false,
+      "grants_access": [
+        "Form 4 3D Printers"
+      ],
+      "sources": [
+        {
+          "kind": "swp",
+          "file": "SWP_J11_S120_Formlabs_Form_4.md",
+          "ref": "SWP J11 S120 Form 4",
+          "title": "SWP J11 S120 Formlabs Form 4 SLA 3D Printer",
+          "version": "1",
+          "hash": "523112bb51ae"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Before you start",
+          "items": [
+            {
+              "id": "1.1",
+              "kind": "check",
+              "text": "Has read the Form 4 SWP and knows where to find it",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: introduction",
+                  "text": "Use this Safe Work Procedure (SWP) for the Formlabs Form 4 stereolithography 3D printer and the Form Wash and Form Cure post-processing units used with it. The process uses liquid photopolymer resin that is a skin and eye irritant and a potential skin sensitiser, and washing uses isopropyl alcohol, which is highly flammable. Every printed part is coated in uncured resin until it has been washed and cured. Gloves and eye protection are mandatory for all handling of resin, cartridges, tanks, build platforms, wash solvent and unwashed parts."
+                }
+              ]
+            },
+            {
+              "id": "1.2",
+              "kind": "check",
+              "text": "Knows where the Safety Data Sheets for the resins and isopropyl alcohol are kept",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 2",
+                  "text": "Read the Safety Data Sheet for the resin and for isopropyl alcohol before first use and whenever a material is changed."
+                }
+              ]
+            },
+            {
+              "id": "1.3",
+              "kind": "ack",
+              "text": "I will not use the Form 4 unsupervised until this induction is confirmed",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Hazards",
+          "items": [
+            {
+              "id": "2.1",
+              "kind": "check",
+              "text": "Resin is a skin and eye irritant; treat every unwashed part as coated in resin",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: hazard - Skin and eye contact with uncured photopolymer resin",
+                  "text": "Read the Safety Data Sheet for every resin before use. Wear nitrile gloves and safety glasses for all handling of cartridges, resin tanks, build platforms, wash solvent and unwashed parts. Treat every part as coated in uncured resin until it has been washed and cured. Never touch resin, a wet part or a wet tank with bare skin, and wash hands thoroughly after removing gloves."
+                }
+              ]
+            },
+            {
+              "id": "2.2",
+              "kind": "check",
+              "text": "Repeated contact can cause sensitisation; why contaminated gloves are changed straight away",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: hazard - Skin sensitisation from repeated or low-level exposure to uncured resin",
+                  "text": "Repeated contact can cause allergic sensitisation, after which even small exposures may cause a reaction. Change gloves as soon as they are contaminated or torn and do not reuse them. Do not wipe gloved hands on clothing, benches, keyboards or door handles. Remove contaminated gloves before touching anything outside the work area, and report any skin irritation, rash or reaction."
+                }
+              ]
+            },
+            {
+              "id": "2.3",
+              "kind": "check",
+              "text": "Isopropyl alcohol is highly flammable; wash unit lid closed, no ignition sources nearby",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: hazard - Fire and explosion risk from isopropyl alcohol used in the wash unit",
+                  "text": "Isopropyl alcohol is highly flammable and its vapour can ignite well below room temperature. Keep the wash unit lid closed except when loading or unloading, and keep all ignition sources, hot surfaces, soldering and any hot work away from the wash area. Do not operate the cure unit or other heat sources immediately beside an open wash unit. Store only the approved quantity of solvent, in labelled closed containers in the designated flammable liquids cabinet."
+                }
+              ]
+            },
+            {
+              "id": "2.4",
+              "kind": "check",
+              "text": "Never use a metal tool in the resin tank, and never start on a damaged tank film",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: hazard - Damage to the resin tank film or optical window leading to a resin leak",
+                  "text": "Never use a metal tool inside the resin tank; use only the approved plastic scraper for the tank. Do not force the build platform, leave a failed part or cured debris in the tank, or start a job on a scratched, clouded or punctured tank film. Report any resin leak onto the optical window or into the machine immediately and stop using the printer."
+                }
+              ]
+            },
+            {
+              "id": "2.5",
+              "kind": "check",
+              "text": "Cure unit and parts are hot after a cycle",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: hazard - Burns from the heated cure chamber and the heated resin tank",
+                  "text": "The cure unit heats parts well above room temperature and the printer heats the resin tank. Allow the cure chamber and parts to cool before removing them, or use suitable handling gloves, and do not touch the heater or the cure chamber interior during or immediately after a cycle."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Demonstrated by the inductee",
+          "items": [
+            {
+              "id": "3.1",
+              "kind": "demo",
+              "text": "Pre-start inspection of the cover, cartridge, tank film and platform",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 4",
+                  "text": "Carry out a pre-start inspection. Check the printer cover and interlock, the cartridge, the resin tank and its film, the build platform, and the wash and cure units for damage, cracks, cloudiness, cured debris or leaks. Report faults and do not use a damaged machine or tank."
+                }
+              ]
+            },
+            {
+              "id": "3.2",
+              "kind": "demo",
+              "text": "Puts on and removes nitrile gloves without contaminating hands",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 22",
+                  "text": "Remove gloves without touching the outer surface, dispose of them in hazardous waste, and wash hands thoroughly with soap and water. Do not use solvent on skin."
+                }
+              ]
+            },
+            {
+              "id": "3.3",
+              "kind": "demo",
+              "text": "Removes the build platform over the tank and carries unwashed parts on a covered tray",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 12",
+                  "text": "Carry unwashed parts on a covered tray. Do not carry a dripping platform or part through the lab and do not set unwashed parts on a clean bench."
+                }
+              ]
+            },
+            {
+              "id": "3.4",
+              "kind": "demo",
+              "text": "Runs a wash cycle with the lid closed, dries the part and runs a cure cycle",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 16",
+                  "text": "Cure parts in the cure unit using the approved time and temperature for the resin. Keep the lid closed during the cycle and allow parts and the chamber to cool before unloading."
+                }
+              ]
+            },
+            {
+              "id": "3.5",
+              "kind": "demo",
+              "text": "Cleans the resin tank with the plastic scraper only",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 18",
+                  "text": "Inspect and clean the resin tank between jobs using the approved plastic scraper only. Never use a metal tool in the tank and never leave cured debris in the resin."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Waste and clean-up",
+          "items": [
+            {
+              "id": "4.1",
+              "kind": "check",
+              "text": "Uncured resin, contaminated solvent, wipes and gloves go in the labelled hazardous waste, never a sink",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 20",
+                  "text": "Place uncured resin, used tanks and films, contaminated solvent, failed prints, supports and contaminated consumables in the labelled hazardous waste containers. Never pour resin or contaminated solvent down a sink or drain."
+                }
+              ]
+            },
+            {
+              "id": "4.2",
+              "kind": "check",
+              "text": "Solvent returns to the flammable liquids cabinet after use",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: step 21",
+                  "text": "Return solvent containers to the flammable liquids cabinet, closed and labelled, and confirm the wash unit lid is closed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Emergencies",
+          "items": [
+            {
+              "id": "5.1",
+              "kind": "check",
+              "text": "How to stop a job and isolate the printer",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: Emergency shutdown",
+                  "text": "- Stop the job from the printer interface immediately if resin is leaking, the tank film is damaged, the cover or interlock fails, or there is an unusual noise, smell or alarm.\n- Switch the affected unit off and, where the fault is electrical or involves liquid reaching wiring, isolate at the outlet if it is safe to do so.\n- Stop the wash unit and close its lid immediately on any solvent spill, strong vapour, or any ignition source appearing near the wash area. Do not switch equipment on or off in a vapour cloud; ventilate first.\n- For a resin or solvent spill, stop work, put on gloves and eye protection, contain the spill with absorbent material, and prevent it reaching drains or walkways. Place all contaminated material in hazardous waste.\n- For a solvent spill beyond what can be safely contained, or any fire, evacuate the immediate area, raise the alarm and follow the local emergency procedure. Use an extinguisher suitable for flammable liquids only if trained and safe to do so.\n- Do not reach into the printer while it is running, and do not open a cover to investigate a fault while a job is in progress.\n- Secure the area and report the incident or fault. Do not return the printer, wash or cure unit to service until covers, interlocks, the tank and film, the optical window, cartridges and wiring have been inspected and use has been authorised."
+                }
+              ]
+            },
+            {
+              "id": "5.2",
+              "kind": "check",
+              "text": "Resin or solvent in the eye: eyewash for at least fifteen minutes",
+              "refs": [
+                {
+                  "label": "SWP J11 S120 Form 4: Emergency procedures",
+                  "text": "- Follow the local SPL emergency plan and University emergency instructions. Raise the alarm and contact emergency assistance using the locally displayed numbers for any chemical injury, eye injury, burn or serious reaction.\n- For resin or solvent on skin, remove contaminated gloves and clothing, wash the area with soap and plenty of water, and do not use solvent on skin. Seek medical advice if irritation develops or persists.\n- For resin or solvent in the eye, flush at the eyewash station with the eyelids held open for at least fifteen minutes and arrange medical assessment. Take the Safety Data Sheet with the person.\n- For ingestion, do not induce vomiting, rinse the mouth and seek immediate medical advice with the Safety Data Sheet.\n- For solvent vapour exposure with headache, dizziness, nausea or respiratory irritation, move the person to fresh air, ventilate the area and seek medical advice.\n- Report any rash, itching or skin reaction, as this may indicate sensitisation and requires medical assessment before further work with these materials.\n- For a solvent fire, evacuate and raise the alarm. Use an extinguisher suitable for flammable liquids only if trained and safe to do so, and never use water on a solvent fire.\n- For a burn from the cure unit, cool the area under cool running water for at least twenty minutes and arrange medical assessment for anything more than a minor burn.\n- Provide first aid only within your training, and use the safety shower for any significant chemical contact with the body.\n- For fire or another building emergency, stop work if safe, evacuate as directed and proceed to the nominated assembly area."
+                }
+              ]
+            },
+            {
+              "id": "5.3",
+              "kind": "ack",
+              "text": "I will report any skin irritation, rash, spill or near miss",
+              "refs": []
+            }
+          ]
+        }
+      ],
+      "version": "7e17ed647998"
+    },
+    {
+      "id": "IND_J11_S120_SPACE",
+      "title": "J11 S120 space induction",
+      "type": "space",
+      "location": "J11 S120",
+      "description": "Introduction to room S120 in building J11: how to get in, where the safety equipment is, and the room rules. This does not authorise you to use any equipment; each machine has its own induction.",
+      "refresh_months": 24,
+      "self_service": false,
+      "grants_access": [
+        "J11 S120"
+      ],
+      "sources": [
+        {
+          "kind": "ra",
+          "file": "RA_J11_S120_3D_Printing.md",
+          "ref": "RA_J11_S120",
+          "title": "J11 S120 3D Printing Risk Assessment",
+          "version": "",
+          "hash": "d3c629e5c539"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Getting around",
+          "items": [
+            {
+              "id": "1.1",
+              "kind": "check",
+              "text": "Room access, opening hours and who to contact",
+              "refs": []
+            },
+            {
+              "id": "1.2",
+              "kind": "check",
+              "text": "Where emergency contact details are displayed",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "Emergency contact details are displayed at ______."
+                }
+              ]
+            },
+            {
+              "id": "1.3",
+              "kind": "check",
+              "text": "Emergency exits, the fire warden and the J11 assembly area",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "Building fire warden: ______. Evacuate to the J11 assembly area as directed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Safety equipment",
+          "items": [
+            {
+              "id": "2.1",
+              "kind": "check",
+              "text": "First aid kit and first aid officer",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "First aid kit: ______. First aid officer: ______."
+                }
+              ]
+            },
+            {
+              "id": "2.2",
+              "kind": "check",
+              "text": "Eyewash station and safety shower",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "Eyewash station and safety shower: ______."
+                }
+              ]
+            },
+            {
+              "id": "2.3",
+              "kind": "check",
+              "text": "Spill kits for resin and flammable solvent",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "Spill kits for resin and flammable solvent: ______."
+                }
+              ]
+            },
+            {
+              "id": "2.4",
+              "kind": "check",
+              "text": "Fire extinguishers and which fires they are for",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: emergency controls",
+                  "text": "Extinguishers suitable for electrical and flammable liquid fires: ______."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Room rules",
+          "items": [
+            {
+              "id": "3.1",
+              "kind": "check",
+              "text": "No food or drink in S120",
+              "refs": []
+            },
+            {
+              "id": "3.2",
+              "kind": "check",
+              "text": "Enclosed footwear in the room at all times",
+              "refs": []
+            },
+            {
+              "id": "3.3",
+              "kind": "check",
+              "text": "Equipment in S120 needs its own induction before use: CR-10 printers, Form 4 and J5 PolyJet",
+              "refs": []
+            },
+            {
+              "id": "3.4",
+              "kind": "check",
+              "text": "Printers are not left running unattended unless specifically authorised",
+              "refs": [
+                {
+                  "label": "RA_J11_S120: risk - Working alone",
+                  "text": "Hazards: Injury or incapacitation with no one present to help Harm: An injured person not getting assistance Injury becoming more severe without prompt first aid Existing controls: Unattended printing only where specifically authorised Current risk: Medium Additional controls: Confirm the SPL rule for working alone and after hours, and add it to the SWPs Residual risk: Medium"
+                }
+              ]
+            },
+            {
+              "id": "3.5",
+              "kind": "ack",
+              "text": "I will only use equipment I have been inducted on",
+              "refs": []
+            },
+            {
+              "id": "3.6",
+              "kind": "ack",
+              "text": "I will report hazards, spills, damage and near misses to SPL staff",
+              "refs": []
+            }
+          ]
+        }
+      ],
+      "version": "babfc145ab9c"
+    }
+  ],
+  "hash": "2c2e2ad7b079"
+}

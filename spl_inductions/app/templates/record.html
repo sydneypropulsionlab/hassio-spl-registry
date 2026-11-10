@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_status.html" import badge, kindlabel %}
+{% block title %}Record {{ r.id }}{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/people/{{ r.person_id }}">&larr; {{ r.person_name }}</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ ind.title }}</h1>
+    <p class="muted">Record {{ r.id }} · {{ ind.location }}{% if r.entry_method == 'manual' %} · <strong>manual entry</strong>{% endif %}</p>
+  </div>
+  <div>{{ badge(status) }}</div>
+</div>
+
+{% if newer %}
+<div class="notice changed-banner noprint">
+  <div><strong>This induction has changed since this record was signed.</strong> The record shows the checklist as it was; the current version is <code>{{ newer.version }}</code>.</div>
+  <a class="btn secondary" href="/records/{{ r.id }}/compare">Compare with current</a>
+</div>
+{% endif %}
+<section class="card">
+  <table class="kv">
+    <tr><th>Inductee</th><td><a href="/people/{{ r.person_id }}">{{ r.person_name }}</a> ({{ r.person_email }}) {% if r.person_unikey %}<code class="unikey">{{ r.person_unikey }}</code>{% else %}<span class="badge warn">UniKey missing</span>{% endif %}{% if r.person_role %}, {{ r.person_role }}{% endif %}</td></tr>
+    <tr><th>Assessor</th><td>{{ r.assessor_name or '' }}</td></tr>
+    {% if r.entry_method == 'manual' %}
+    <tr><th>Induction date</th><td>{{ r.assessor_signed_at|date }}</td></tr>
+    <tr><th>Entered</th><td>Manually by {{ r.entered_by_name or 'an assessor' }}, {{ r.created_at|local }}. The checklist was not completed in this app.</td></tr>
+    {% else %}
+    <tr><th>Inductee signed</th><td>{% if r.inductee_signed_at %}{{ r.inductee_name }} · {{ r.inductee_signed_at|local }}{% endif %}</td></tr>
+    {% if r.inductee_signature %}<tr><th>Signature</th><td><img class="sigimg" src="{{ r.inductee_signature }}" alt="Inductee signature"></td></tr>{% endif %}
+    <tr><th>Assessor signed</th><td>{{ r.assessor_signed_at|local }}</td></tr>
+    <tr><th>Confirmed by email</th><td>{{ r.confirmed_at|local }}{% if r.status == 'awaiting_confirmation' %}Link sent {{ r.confirm_sent_at|local }}, expires {{ r.confirm_expires_at|local }}{% endif %}</td></tr>
+    {% endif %}
+    {% if grants_access(ind) %}<tr><th>Grants access</th><td>{% for a in grants_access(ind) %}<span class="chip">{{ a }}</span>{% endfor %}</td></tr>{% endif %}
+    <tr><th>Valid until</th><td>{% if r.expires_at %}{{ r.expires_at|date }}{% elif r.status == 'complete' %}No expiry{% elif r.refresh_months %}{{ r.refresh_months }} months from sign-off, once confirmed{% endif %}</td></tr>
+    {% if r.notes %}<tr><th>Notes</th><td>{{ r.notes }}</td></tr>{% endif %}
+    {% if r.entry_method != 'manual' %}<tr><th>Checklist version</th><td><code>{{ r.induction_version }}</code></td></tr>{% endif %}
+    {% if ind.sources %}<tr><th>{% if r.entry_method == 'manual' %}Source documents when entered{% else %}Source documents{% endif %}</th><td>{% for s in ind.sources %}{{ s.title }} ({% if s.version %}{{ 'draft' if s.version == 'draft' else 'v' ~ s.version }}, {% endif %}<code>{{ s.hash }}</code>){% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>{% endif %}
+  </table>
+  <div class="row noprint">
+    <button class="btn secondary" onclick="window.print()">Print</button>
+    {% if r.status == 'complete' %}<a class="btn secondary" href="/records/{{ r.id }}/edit">Edit</a>
+    <a class="btn secondary" href="/records/{{ r.id }}/certificate.pdf" target="_blank">Certificate</a>
+    <form method="post" action="/records/{{ r.id }}/certificate/send"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn secondary">Email certificate</button></form>{% endif %}
+    {% if r.status == 'awaiting_confirmation' %}
+    <form method="post" action="/records/{{ r.id }}/resend"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn secondary">Resend confirmation email</button></form>
+    {% endif %}
+    {% if r.status in ('joined', 'inductee_signed', 'awaiting_confirmation') or (r.entry_method == 'manual' and r.status == 'complete') %}
+    <form method="post" action="/records/{{ r.id }}/cancel" onsubmit="return confirm('Cancel this record? It stays in the log as cancelled.')"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn danger">Cancel record</button></form>
+    {% endif %}
+  </div>
+  <details class="noprint delete-box">
+    <summary>Delete this record</summary>
+    <form method="post" action="/records/{{ r.id }}/delete" class="stack" onsubmit="return confirm('Permanently delete record {{ r.id }}? This cannot be undone.')">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <p class="small">Deleting removes the record completely. Only a short note (person, induction, date, who deleted it and why) stays in the audit log. {% if r.status in ('joined', 'inductee_signed', 'awaiting_confirmation') %}To stop an unfinished induction and keep it in the history, use Cancel instead.{% endif %}</p>
+      <label>Reason <input name="reason" required placeholder="e.g. entered against the wrong person" autocomplete="off"></label>
+      <button class="btn danger">Delete permanently</button>
+    </form>
+  </details>
+</section>
+
+{% if r.entry_method != 'manual' %}
+<section class="card">
+  <h2>Checklist</h2>
+  {% for sec in ind.sections %}
+  <h3>{{ sec.title }}</h3>
+  <ul class="checklist record">
+    {% for it in sec['items'] %}
+    {% set t = ticks.get(it.id) %}
+    <li class="item {{ it.kind }} {% if t %}done{% endif %}">
+      <span class="mark">{% if it.kind == 'info' %}–{% elif t %}✓{% else %}✗{% endif %}</span>
+      <span><span class="who">{{ kindlabel(it.kind) }}</span> {{ it.text|linkify }}{% if t %} <span class="small muted">({{ t.by }}, {{ t.at|local }})</span>{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="card noprint">
+  <h2>History</h2>
+  <table>
+    {% for h, d in history %}<tr><td>{{ h.at|local }}</td><td>{{ h.actor }}</td><td>{{ h.action|replace('_', ' ') }}
+      {% if d.reason %}<br><span class="small">Reason: {{ d.reason }}</span>{% endif %}
+      {% if d.changes %}<br><span class="small muted">{% for k, v in d.changes.items() %}{{ k|capitalize }}: {{ v[0] if v[0] not in (none, '') else 'none' }} → {{ v[1] if v[1] not in (none, '') else 'none' }}{% if not loop.last %}; {% endif %}{% endfor %}</span>{% endif %}
+    </td></tr>{% endfor %}
+  </table>
+</section>
+{% endblock %}

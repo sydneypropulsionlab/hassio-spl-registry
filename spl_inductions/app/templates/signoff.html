@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sign off {{ r.person_name }}{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/sessions/{{ r.session_id }}">&larr; Back to session</a></p>
+<div class="card">
+  <h1>Sign off</h1>
+  <table class="kv">
+    <tr><th>Inductee</th><td>{{ r.person_name }} ({{ r.person_email }}) <code class="unikey">{{ r.person_unikey or 'no UniKey' }}</code>{% if r.person_role %}, {{ r.person_role }}{% endif %}</td></tr>
+    <tr><th>Induction</th><td>{{ ind.title }}, {{ ind.location }}</td></tr>
+    <tr><th>Checklist</th><td>{{ prog.done }} of {{ prog.total }} items complete</td></tr>
+    <tr><th>Inductee signed</th><td>{% if r.inductee_signed_at %}{{ r.inductee_name }}, {{ r.inductee_signed_at|local }}{% else %}Not yet{% endif %}</td></tr>
+  </table>
+  {% if r.status != 'inductee_signed' %}
+  <p class="error">The inductee has not signed yet.</p>
+  {% elif not prog.complete %}
+  <p class="error">Some items are not complete.</p>
+  {% else %}
+  <form method="post" action="/records/{{ r.id }}/signoff" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Refresh after
+      <select name="refresh_months">
+        {% for m in [0, 3, 6, 12, 18, 24, 36] %}<option value="{{ m }}" {% if m == ind.refresh_months %}selected{% endif %}>{% if m %}{{ m }} months{% else %}No expiry{% endif %}</option>{% endfor %}
+        {% if ind.refresh_months not in [0, 3, 6, 12, 18, 24, 36] %}<option value="{{ ind.refresh_months }}" selected>{{ ind.refresh_months }} months</option>{% endif %}
+      </select>
+    </label>
+    <label>Notes (optional) <textarea name="notes" rows="3" placeholder="Restrictions, supervision required, anything to follow up"></textarea></label>
+    <label class="tick"><input type="checkbox" name="declaration" value="yes" required> <span>I, {{ me.name }}, have taken this person through every item and I am satisfied they are competent to work under this induction.</span></label>
+    <button class="btn">Sign off and email confirmation</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

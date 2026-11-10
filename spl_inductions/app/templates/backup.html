@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_summary.html" import summary_rows %}
+{% block title %}Backup{% endblock %}
+{% block content %}
+<h1>Backup and restore</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<div class="grid-2">
+<section class="card">
+  <h2>Download a backup</h2>
+  <p>A complete copy of the database as one <code>.db</code> file: people, records and signatures, checklists, assessors, and the email and audit logs. It's safe to download while the app is in use.</p>
+  <table class="kv small">{{ summary_rows(current) }}</table>
+  <p><a class="btn" href="/backup/download">Download backup</a></p>
+  <p class="small muted">The file contains personal information and assessor logins. Keep it somewhere access-controlled, such as your University OneDrive.</p>
+</section>
+
+<section class="card">
+  <h2>Restore from a backup</h2>
+  <p>Upload a <code>.db</code> file downloaded from this page. You'll see what's in it compared with the current database before anything changes.</p>
+  <form method="post" action="/backup/upload" enctype="multipart/form-data" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="file" name="file" accept=".db,application/vnd.sqlite3,application/octet-stream" required>
+    <button class="btn secondary">Check backup</button>
+  </form>
+  <p class="small muted">Restoring replaces everything with the backup's contents, including assessor accounts and passwords. The current database is saved first as a safety copy.</p>
+</section>
+</div>
+
+<section class="card">
+  <h2>Safety copies</h2>
+  <p class="small muted">Saved automatically before each restore, so a restore can be undone. The newest {{ 10 }} are kept.</p>
+  {% if copies %}
+  <table>
+    <tr><th>Saved</th><th>Size</th><th></th></tr>
+    {% for c in copies %}
+    <tr><td>{{ c.at|local }}</td><td>{{ (c.size / 1024)|round|int }} KB</td>
+      <td class="row">
+        <a href="/backup/copies/{{ c.name }}">Download</a>
+        <form method="post" action="/backup/copies/{{ c.name }}/review"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link">Restore this…</button></form>
+      </td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">None yet.</p>{% endif %}
+</section>
+{% endblock %}

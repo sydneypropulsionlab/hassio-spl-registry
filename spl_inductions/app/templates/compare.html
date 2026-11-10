@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Compare: record {{ r.id }}{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/records/{{ r.id }}">&larr; Record {{ r.id }}</a></p>
+<h1>What's changed</h1>
+<p class="muted">{{ r.person_name }} · {{ old.title }}</p>
+
+<section class="card compare-head">
+  <div class="cmp-side old"><span class="label">Signed against</span><code>{{ old.version }}</code><span class="small muted">{{ r.assessor_signed_at|date if r.assessor_signed_at else r.created_at|date }}</span></div>
+  <div class="cmp-arrow">→</div>
+  <div class="cmp-side new"><span class="label">Compared with</span><code>{{ new.version }}</code>
+    <form method="get" class="row">
+      <select name="against" onchange="this.form.submit()">
+        {% for v in versions %}<option value="{{ v.version }}" {% if v.version == row.version %}selected{% endif %}>{{ v.version }} · uploaded {{ v.uploaded_at|date }}{% if v.active %} (current){% endif %}{% if v.version == r.induction_version %} (this record){% endif %}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn secondary">Show</button></noscript>
+    </form>
+  </div>
+</section>
+
+{% if not d.any %}
+<p class="flash">No differences: this record was signed against the same checklist{% if not d.identical %} content{% endif %}.</p>
+{% else %}
+<p class="cmp-summary">
+  {% if d.counts.added %}<span class="cmp-pill add">+{{ d.counts.added }} added</span>{% endif %}
+  {% if d.counts.removed %}<span class="cmp-pill del">−{{ d.counts.removed }} removed</span>{% endif %}
+  {% if d.counts.changed %}<span class="cmp-pill chg">~{{ d.counts.changed }} reworded</span>{% endif %}
+  {% if d.counts.refs %}<span class="cmp-pill chg">{{ d.counts.refs }} SWP excerpt{{ 's' if d.counts.refs != 1 }} changed</span>{% endif %}
+  {% if d.sources %}<span class="cmp-pill src">{{ d.sources|length }} source document{{ 's' if d.sources|length != 1 }} changed</span>{% endif %}
+</p>
+
+{% if d.fields %}
+<section class="card">
+  <h2>Induction details</h2>
+  <table class="cmp-table">
+    {% for f in d.fields %}
+    <tr><th>{{ f.label }}</th>
+      {% if f.old_html is defined %}<td class="old-cell">{{ f.old_html }}</td><td class="new-cell">{{ f.new_html }}</td>
+      {% else %}<td class="old-cell"><del>{{ f.old }}</del></td><td class="new-cell"><ins>{{ f.new }}</ins></td>{% endif %}</tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+
+{% if d.sources %}
+<section class="card">
+  <h2>Source documents</h2>
+  <ul class="cmp-list">
+    {% for s in d.sources %}
+    <li class="cmp-row {{ {'added': 'add', 'removed': 'del', 'changed': 'chg'}[s.op] }}">
+      <span class="sign">{{ {'added': '+', 'removed': '−', 'changed': '~'}[s.op] }}</span>
+      <span><strong>{{ (s.new or s.old).title }}</strong>
+        {% if s.op == 'changed' %}<br><span class="small">{% if s.version_changed %}Version {{ s.old.version }} → {{ s.new.version }}{% else %}Version {{ s.new.version }} (not bumped){% endif %} · file <code>{{ s.old.hash }}</code> → <code>{{ s.new.hash }}</code>. Changed SWP text that this checklist quotes is shown below; other edits to the document aren't.</span>
+        {% elif s.op == 'added' %}<br><span class="small">Now based on this document (version {{ s.new.version }}).</span>
+        {% else %}<br><span class="small">No longer referenced.</span>{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Checklist</h2>
+  <label class="tick small"><input type="checkbox" id="only-changes" checked> <span>Show changes only</span></label>
+  {% for sec in d.sections %}
+  <div class="cmp-section {% if not sec.changed %}unchanged{% endif %}">
+    <h3>{{ sec.title }}{% if sec.status == 'added' %} <span class="cmp-pill add">new section</span>{% elif sec.status == 'removed' %} <span class="cmp-pill del">section removed</span>{% endif %}</h3>
+    <ul class="cmp-list">
+      {% for row in sec.rows %}
+      {% if row.op == 'same' %}
+      <li class="cmp-row same"><span class="sign"> </span><span><span class="who">{{ kinds[row.new.kind] }}</span> {{ row.new.text }}</span></li>
+      {% elif row.op == 'added' %}
+      <li class="cmp-row add"><span class="sign">+</span><span><span class="who">{{ kinds[row.new.kind] }}</span> {{ row.new.text }}</span></li>
+      {% elif row.op == 'removed' %}
+      <li class="cmp-row del"><span class="sign">−</span><span><span class="who">{{ kinds[row.old.kind] }}</span> {{ row.old.text }}</span></li>
+      {% elif row.op == 'changed' %}
+      <li class="cmp-row del"><span class="sign">−</span><span><span class="who">{{ kinds[row.old.kind] }}</span> {{ row.old_html }}</span></li>
+      <li class="cmp-row add"><span class="sign">+</span><span><span class="who">{{ kinds[row.new.kind] }}</span> {{ row.new_html }}{% if row.kind_changed %} <span class="small muted">(was {{ kinds[row.old.kind]|lower }})</span>{% endif %}</span></li>
+      {% endif %}
+      {% if row.refs %}
+      <li class="cmp-row chg refs-row"><span class="sign">~</span><span><span class="small"><strong>SWP text for "{{ row.new.text }}" changed</strong></span>
+        <div class="cmp-refs"><div class="old-cell">{{ row.refs[0] }}</div><div class="new-cell">{{ row.refs[1] }}</div></div></span></li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var box = document.getElementById('only-changes');
+  if (!box) return;
+  function apply() { document.body.classList.toggle('cmp-only', box.checked); }
+  box.addEventListener('change', apply); apply();
+})();
+</script>
+{% endblock %}

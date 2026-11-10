@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}API reference{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/api-keys">&larr; API keys</a></p>
+<h1>API reference</h1>
+<p>A read-only JSON API that answers "is this person inducted on this?", keyed by UniKey. It's meant for the tap-card add-on, which links card IDs to UniKeys and asks this app for the decision.</p>
+
+<section class="card">
+  <h2>Connecting</h2>
+  <table class="kv">
+    <tr><th>From another add-on</th><td><code>http://local-spl-inductions:8099/api/v1</code> (Home Assistant's internal network; for a local add-on the hostname is <code>local-</code> plus the slug with dashes. If it doesn't resolve, check the hostname on this add-on's Info page.)</td></tr>
+    <tr><th>From elsewhere</th><td><code>{{ settings.base_url }}/api/v1</code>, over HTTPS</td></tr>
+    <tr><th>Key</th><td>Header <code>Authorization: Bearer spl_…</code> or <code>X-API-Key: spl_…</code>. Create keys on the <a href="/api-keys">API keys</a> page.</td></tr>
+    <tr><th>Expiry</th><td>Access ends on the expiry date{% if settings.access_grace_days %}, plus {{ settings.access_grace_days }} days' grace{% endif %} (add-on option <code>access_grace_days</code>).</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Rules</h2>
+  <p>A person may use a resource when they have a <strong>completed</strong> (confirmed or manually entered), <strong>unexpired</strong>, non-cancelled record for an induction that grants it, <strong>and</strong> current records for every induction it requires (e.g. the room's space induction). Unconfirmed sign-offs don't count. The "SWP updated since induction" flag doesn't block access.</p>
+</section>
+
+<section class="card">
+  <h2><code>GET /api/v1/access/check?unikey=abcd1234&amp;resource=j11-n209b</code></h2>
+  <p>The decision for one person and one resource. Always returns 200 with <code>allowed</code> true or false and a <code>reason</code>:</p>
+  <table>
+    <tr><th>reason</th><th>allowed</th><th>meaning</th></tr>
+    <tr><td><code>current</code></td><td>true</td><td>Inducted and in date; <code>access_until</code> is when it lapses (null = no expiry)</td></tr>
+    <tr><td><code>expired</code></td><td>false</td><td>The induction has expired</td></tr>
+    <tr><td><code>prerequisite_missing</code></td><td>false</td><td>Inducted on it, but a required induction (listed in <code>requires_missing</code>) is missing or expired</td></tr>
+    <tr><td><code>not_inducted</code></td><td>false</td><td>No completed induction that grants it</td></tr>
+    <tr><td><code>unknown_person</code></td><td>false</td><td>No inductions recorded for that UniKey</td></tr>
+    <tr><td><code>unknown_resource</code></td><td>false</td><td>No loaded induction grants that resource id</td></tr>
+  </table>
+<pre>{
+  "unikey": "abcd1234", "resource": "j11-n209b", "resource_name": "J11 N209B",
+  "allowed": true, "reason": "current",
+  "message": "SPL lab induction (N209B) current until 2028-10-29",
+  "person": {"name": "Alex Lee", "unikey": "abcd1234"},
+  "induction": {"id": "IND_J11_N209B_SPACE", "title": "SPL lab induction (N209B)"},
+  "expires_at": "2028-10-29T01:00:00+00:00", "access_until": "2028-10-29T01:00:00+00:00",
+  "checked_at": "2026-10-30T00:12:03+00:00"
+}</pre>
+</section>
+
+<section class="card">
+  <h2><code>GET /api/v1/access</code></h2>
+  <p>Everyone who currently has access to anything, and to what, for a card system to keep a local copy (so readers keep working if this app restarts). Send the <code>ETag</code> back as <code>If-None-Match</code> when polling: you get <code>304 Not Modified</code> until something changes.</p>
+<pre>{
+  "grace_days": 0,
+  "people": [
+    {"unikey": "abcd1234", "name": "Alex Lee",
+     "resources": [{"id": "j11-n209b", "expires_at": "2028-10-29T01:00:00+00:00", "access_until": "2028-10-29T01:00:00+00:00"}]}
+  ],
+  "generated_at": "2026-10-30T00:12:03+00:00"
+}</pre>
+</section>
+
+<section class="card">
+  <h2><code>GET /api/v1/people/abcd1234</code></h2>
+  <p>One person's inductions (status <code>current</code> or <code>expired</code>, expiry, prerequisites) and the resources they can use now. 404 if the UniKey isn't known.</p>
+</section>
+
+<section class="card">
+  <h2><code>GET /api/v1/resources</code></h2>
+  <p>Every resource id, its name and room, and which inductions grant it. Resource ids come from <code>grants_access</code> in the induction files; set fixed ids there (<code>- form4: Formlabs Form 4</code>) before readers depend on them.</p>
+  {% if resources %}
+  <table>
+    <tr><th>Resource id</th><th>Name</th><th>Room</th><th>Granted by</th></tr>
+    {% for r in resources %}
+    <tr><td><code>{{ r.id }}</code></td><td>{{ r.name }}</td><td>{{ r.locations|join(', ') }}</td>
+      <td class="small">{% for i in r.inductions %}{{ i.title }}{% if i.requires %} <span class="muted">(also needs {{ i.requires|join(', ') }})</span>{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">No resources yet: add <code>grants_access</code> to the induction files and upload the bundle.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Errors</h2>
+  <p><code>401</code> missing, invalid or revoked key · <code>429</code> too many requests (limit 1200 a minute per key) · <code>400</code> missing parameters. Errors are JSON: <code>{"error": "…"}</code>.</p>
+</section>
+{% endblock %}

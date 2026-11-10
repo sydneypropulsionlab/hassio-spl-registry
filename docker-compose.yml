@@ -1,0 +1,25 @@
+# Run the add-on outside Home Assistant, for testing on a laptop:
+#   docker compose up --build
+# then open http://localhost:8099 (set SPL_BASE_URL to this computer's network address
+# so phones on the same network can scan the QR code).
+services:
+  spl_inductions:
+    build: ./spl_inductions
+    ports:
+      - "8099:8099"
+    environment:
+      SPL_BASE_URL: "http://localhost:8099"
+      SPL_TIMEZONE: "Australia/Sydney"
+      # Induction bundle from the local dev wiki (hassio-dokuwiki on port 8081).
+      # host.docker.internal is this computer as seen from inside a container.
+      SPL_BUNDLE_URL: "http://host.docker.internal:8081/lib/exe/fetch.php?media=whs:inductions:inductions.json"
+      SPL_BUNDLE_POLL_MINUTES: "1"
+      # SPL_BUNDLE_USERNAME: ""   # needed on the real wiki, where pages aren't public
+      # SPL_BUNDLE_PASSWORD: ""
+      # SPL_SMTP_HOST: ""
+      # SPL_SMTP_PORT: "587"
+      # SPL_SMTP_USERNAME: ""
+      # SPL_SMTP_PASSWORD: ""
+      # SPL_SMTP_FROM: ""
+    volumes:
+      - ./local-data:/data

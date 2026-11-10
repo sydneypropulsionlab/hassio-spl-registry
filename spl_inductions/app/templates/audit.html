@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h1>Audit log</h1>
+<section class="card">
+  <table class="small">
+    <tr><th>When</th><th>Who</th><th>Action</th><th>Item</th><th>Details</th></tr>
+    {% for a in rows %}
+    <tr><td class="nowrap">{{ a.at|local }}</td><td>{{ a.actor }}</td><td>{{ a.action|replace('_', ' ') }}</td>
+      <td>{% if a.entity == 'record' %}<a href="/records/{{ a.entity_id }}">record {{ a.entity_id }}</a>{% elif a.entity %}{{ a.entity }} {{ a.entity_id }}{% endif %}</td>
+      <td>{% if a.details %}<code>{{ a.details }}</code>{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endblock %}

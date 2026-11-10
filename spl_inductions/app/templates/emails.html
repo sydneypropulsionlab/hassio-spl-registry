@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Email log{% endblock %}
+{% block content %}
+<h1>Email log</h1>
+{% if not settings.smtp_host %}<p class="notice">SMTP is not configured, so emails are logged here but not sent. Set the SMTP options in the add-on configuration. Until then you can copy a confirmation link from below and give it to the inductee.</p>{% endif %}
+<section class="card">
+  {% for e in emails %}
+  <details class="email">
+    <summary><span class="badge {{ {'sent': 'ok', 'failed': 'bad'}.get(e.status, 'warn') }}">{{ e.status|replace('_', ' ') }}</span> {{ e.created_at|local }} · {{ e.to_addr }} · {{ e.subject }}</summary>
+    {% if e.cc %}<p class="small muted">CC: {{ e.cc }}</p>{% endif %}
+    {% if e.attachments %}<p class="small muted">Attached: {{ e.attachments }}</p>{% endif %}
+    {% if e.error %}<p class="error small">{{ e.error }}</p>{% endif %}
+    <pre>{{ e.body }}</pre>
+  </details>
+  {% else %}<p class="muted">No emails yet.</p>{% endfor %}
+</section>
+{% endblock %}

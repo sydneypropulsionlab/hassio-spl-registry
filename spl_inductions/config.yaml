@@ -1,0 +1,52 @@
+name: SPL Inductions
+version: "0.12.0"
+slug: spl_inductions
+description: Equipment and space inductions with QR sign-in, sign-off and an induction register
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+ports:
+  8099/tcp: 8099
+ports_description:
+  8099/tcp: Induction web app (assessors and inductees)
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:clipboard-check-outline
+panel_title: SPL Inductions
+backup: hot
+options:
+  base_url: "http://homeassistant.local:8099"
+  timezone: "Australia/Sydney"
+  smtp_port: 587
+  smtp_starttls: true
+  session_minutes: 30
+  confirm_days: 7
+  expiry_warning_days: 30
+  require_drawn_signature: false
+  certificate_cc: []
+  access_grace_days: 0
+  bundle_poll_minutes: 10
+schema:
+  base_url: url
+  timezone: str
+  smtp_host: str?
+  smtp_port: port
+  smtp_username: str?
+  smtp_password: password?
+  smtp_from: email?
+  smtp_starttls: bool
+  session_minutes: int(5,240)
+  confirm_days: int(1,60)
+  expiry_warning_days: int(0,365)
+  require_drawn_signature: bool
+  certificate_cc:
+    - email
+  access_grace_days: int(0,90)
+  bundle_url: url?
+  bundle_username: str?
+  bundle_password: password?
+  bundle_token: password?
+  bundle_poll_minutes: int(0,1440)

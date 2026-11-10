@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div class="card center">
+  <h1>{{ title }}</h1>
+  <p>{{ text }}</p>
+  {% if link %}<p><a class="btn" href="{{ link }}">Go back</a></p>{% endif %}
+</div>
+{% endblock %}

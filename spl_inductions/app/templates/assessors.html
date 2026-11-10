@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Assessors{% endblock %}
+{% block content %}
+<h1>Assessors</h1>
+{% if created %}
+<div class="flash">Created {{ created.name }} ({{ created.email }}). Temporary password: <code class="pw">{{ created.password }}</code><br>Give it to them in person; it is shown only once. They should change it under My account.</div>
+{% endif %}
+<section class="card">
+  <table>
+    <tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+    {% for a in assessors %}
+    <tr><td>{{ a.name }}</td><td>{{ a.email }}</td><td>{% if a.active %}<span class="badge ok">Active</span>{% else %}<span class="badge muted">Deactivated</span>{% endif %}</td>
+      <td>{% if a.id != me.id %}<form method="post" action="/assessors/{{ a.id }}/toggle"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link">{{ 'Deactivate' if a.active else 'Reactivate' }}</button></form>{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+<section class="card">
+  <h2>Add an assessor</h2>
+  <form method="post" action="/assessors" class="row">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input name="name" placeholder="Name" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <button class="btn">Add</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_status.html" import refs, kindlabel %}
+{% block title %}{{ ind.title }} session{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ ind.title }}</h1>
+    <p class="muted">{{ ind.location }} · session started {{ s.created_at|local }}{% if s.closed_at %} · <strong>closed</strong>{% endif %}</p>
+  </div>
+  {% if not s.closed_at %}
+  <form method="post" action="/sessions/{{ s.id }}/close" onsubmit="return confirm('Close this session? People who have not been signed off will need a new session.')">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn secondary">Close session</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="session-grid">
+  <div class="col">
+    <section class="card qr-card" id="qr-card">
+      {% if joinable %}
+      <h2>Scan to join</h2>
+      <div class="qr">{{ qr|safe }}</div>
+      <p class="big-code">{{ s.code }}</p>
+      <p class="small">or go to <strong>{{ settings.base_url }}</strong> and enter the code</p>
+      <p class="small muted">Joining closes <span data-countdown="{{ s.join_until }}">{{ s.join_until|local('%H:%M') }}</span></p>
+      {% elif not s.closed_at %}
+      <h2>Joining has closed</h2>
+      <p class="muted">The join code expired. People already in the session can carry on.</p>
+      <form method="post" action="/sessions/{{ s.id }}/extend"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn secondary">Reopen joining for {{ settings.session_minutes }} minutes</button></form>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Participants</h2>
+      <div id="participants" data-url="/sessions/{{ s.id }}/participants"><p class="muted">Loading…</p></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <h2>Checklist</h2>
+      <p class="small muted">Tick <strong>Assessor covers</strong> items as you go through them with the group. Each inductee ticks their own acknowledgements on their phone, and you tick each person's demonstrations in the participants list.</p>
+      {% for sec in ind.sections %}
+      <h3>{{ sec.title }}</h3>
+      <ul class="checklist">
+      {% for it in sec['items'] %}
+        <li class="item {{ it.kind }}">
+          {% if it.kind == 'check' %}
+          <label class="tick"><input type="checkbox" data-tick="/sessions/{{ s.id }}/tick" data-item="{{ it.id }}" {% if it.id in ticks %}checked{% endif %} {% if s.closed_at %}disabled{% endif %}> <span><span class="who">{{ kindlabel(it.kind) }}</span> {{ it.text|linkify }}</span></label>
+          {% else %}
+          <span class="who">{{ kindlabel(it.kind) }}</span> {{ it.text|linkify }}
+          {% endif %}
+          {{ refs(it) }}
+        </li>
+      {% endfor %}
+      </ul>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

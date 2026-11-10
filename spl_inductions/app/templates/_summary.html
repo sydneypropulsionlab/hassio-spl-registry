@@ -1,0 +1,8 @@
+{% macro summary_rows(s) %}
+<tr><th>People</th><td>{{ s.people }}</td></tr>
+<tr><th>Records</th><td>{{ s.records }} ({{ s.complete }} complete)</td></tr>
+<tr><th>Active assessors</th><td>{{ s.assessors }}</td></tr>
+<tr><th>Active inductions</th><td>{{ s.inductions }}</td></tr>
+<tr><th>Latest record</th><td>{{ s.latest_record|date if s.latest_record else 'none' }}</td></tr>
+<tr><th>Last activity</th><td>{{ s.last_activity|local if s.last_activity else 'none' }}</td></tr>
+{% endmacro %}

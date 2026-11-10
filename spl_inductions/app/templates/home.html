@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Join an induction</h1>
+  <p>Scan the QR code your assessor shows you, or type the six-character code.</p>
+  <form method="get" action="/join" class="row">
+    <input name="code" placeholder="e.g. K7QM3P" maxlength="6" autocomplete="off" autocapitalize="characters" class="code-input" required>
+    <button class="btn">Join</button>
+  </form>
+</div>
+<p class="muted center"><a href="/login">Assessor login</a></p>
+{% endblock %}

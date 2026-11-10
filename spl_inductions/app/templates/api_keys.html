@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}API keys{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>API keys</h1>
+  <a class="btn secondary" href="/api-docs">API reference</a>
+</div>
+<p class="muted">Keys let other systems, such as the tap-card add-on, ask who is inducted on what. Each key can only read; it can't change anything.</p>
+
+{% if created %}
+<div class="flash">
+  <strong>Key created for {{ created.name }}.</strong> Copy it now; it won't be shown again.
+  <div class="keybox"><code id="newkey">{{ created.key }}</code> <button type="button" class="btn secondary" onclick="navigator.clipboard.writeText(document.getElementById('newkey').textContent); this.textContent='Copied'">Copy</button></div>
+</div>
+{% endif %}
+
+<section class="card">
+  <h2>Create a key</h2>
+  <form method="post" action="/api-keys" class="row">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input name="name" placeholder="What will use it, e.g. Card access add-on" required maxlength="80">
+    <button class="btn">Create key</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Keys</h2>
+  {% if keys %}
+  <table>
+    <tr><th>Name</th><th>Key starts</th><th>Created</th><th>Last used</th><th>Uses</th><th></th></tr>
+    {% for k in keys %}
+    <tr class="{% if k.revoked_at %}muted{% endif %}">
+      <td>{{ k.name }}</td><td><code>{{ k.prefix }}…</code></td>
+      <td>{{ k.created_at|date }}{% if k.by_name %}<br><span class="small muted">{{ k.by_name }}</span>{% endif %}</td>
+      <td>{{ k.last_used_at|local if k.last_used_at else 'never' }}</td><td>{{ k.uses }}</td>
+      <td>{% if k.revoked_at %}<span class="badge muted">Revoked {{ k.revoked_at|date }}</span>
+          {% else %}<form method="post" action="/api-keys/{{ k.id }}/revoke" onsubmit="return confirm('Revoke this key? Anything using it stops working.')"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link">Revoke</button></form>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">No keys yet.</p>{% endif %}
+</section>
+{% endblock %}

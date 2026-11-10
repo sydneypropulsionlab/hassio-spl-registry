@@ -1,0 +1,23 @@
+{% from "_status.html" import badge %}
+{% if not people %}<p class="muted">Nobody has joined yet.</p>{% endif %}
+{% for r, prog, demo, st in people %}
+<div class="participant">
+  <div class="p-head">
+    <div><strong>{{ r.person_name }}</strong> <span class="small muted">{% if r.person_unikey %}{{ r.person_unikey }} · {% endif %}{{ r.person_email }}{% if r.person_role %} · {{ r.person_role }}{% endif %}</span></div>
+    {{ badge(st) }}
+  </div>
+  <div class="bar"><span style="width: {{ (100 * prog.done / prog.total)|round|int if prog.total else 100 }}%"></span></div>
+  <p class="small muted">{{ prog.done }} of {{ prog.total }} done{% if prog.missing.ack %} · {{ prog.missing.ack|length }} acknowledgement{{ 's' if prog.missing.ack|length != 1 }} to go{% endif %}</p>
+  {% if demo_items and r.status in ('joined', 'inductee_signed') %}
+  <ul class="demo-list">
+    {% for it in demo_items %}
+    <li><label class="tick"><input type="checkbox" data-tick="/records/{{ r.id }}/demo" data-item="{{ it.id }}" {% if it.id in demo %}checked{% endif %} {% if r.status != 'joined' %}disabled{% endif %}> <span>{{ it.text|linkify }}</span></label></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <div class="p-actions">
+    {% if r.status == 'inductee_signed' %}<a class="btn" href="/records/{{ r.id }}/signoff">Sign off</a>{% endif %}
+    {% if r.status not in ('joined', 'inductee_signed') %}<a class="small" href="/records/{{ r.id }}">View record</a>{% endif %}
+  </div>
+</div>
+{% endfor %}

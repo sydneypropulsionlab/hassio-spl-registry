@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{% block title %}SPL Inductions{% endblock %}</title>
+<link rel="icon" type="image/png" href="/static/favicon.png?v={{ asset_v }}">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v={{ asset_v }}">
+<meta name="theme-color" content="#0064de">
+<link rel="stylesheet" href="/static/style.css?v={{ asset_v }}">
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<header class="top">
+  <a class="brand" href="/"><img src="/static/spl-logo.png?v={{ asset_v }}" alt="Sydney Propulsion Lab" width="127" height="52"><span>Inductions</span></a>
+  {% if me %}
+  <nav>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/register">Registry</a>
+    <a href="/inductions">Inductions</a>
+    <details class="more"><summary>More</summary>
+      <div class="menu">
+        <a href="/assessors">Assessors</a>
+        <a href="/emails">Email log</a>
+        <a href="/audit">Audit log</a>
+        <a href="/backup">Backup</a>
+        <a href="/api-keys">API keys</a>
+        <a href="/account">My account</a>
+        <form method="post" action="/logout"><button class="link">Log out</button></form>
+      </div>
+    </details>
+  </nav>
+  {% endif %}
+</header>
+<main class="{% block mainclass %}{% endblock %}">
+{% if flash %}<p class="flash">{{ flash }}</p>{% endif %}
+{% block content %}{% endblock %}
+</main>
+<footer>Sydney Propulsion Lab · School of AMME · University of Sydney</footer>
+<script>window.CSRF = "{{ csrf }}";</script>
+<script src="/static/app.js?v={{ asset_v }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

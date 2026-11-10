@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_status.html" import badge %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ p.name }}</h1>
+  <div class="actions">
+    <a class="btn secondary" href="/people/{{ p.id }}/edit">Edit details</a>
+    <a class="btn secondary" href="/records/new?person={{ p.id }}">Add a record</a>
+    {% if not recs %}<form method="post" action="/people/{{ p.id }}/delete" onsubmit="return confirm('Delete this person? They have no records.')"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn danger">Delete person</button></form>{% endif %}
+  </div>
+</div>
+<p class="muted">{% if p.unikey %}<code class="unikey">{{ p.unikey }}</code>{% else %}<span class="badge warn">UniKey missing</span>{% endif %} · {{ p.email }}{% if p.role %} · {{ p.role }}{% endif %} · first seen {{ p.created_at|date }}</p>
+<section class="card">
+  <table>
+    <tr><th>Induction</th><th>Status</th><th>Assessor</th><th>Signed off</th><th>Valid until</th><th></th></tr>
+    {% for r, title, st in recs %}
+    <tr><td>{{ title }}{% if r.entry_method == 'manual' %} <span class="small muted">(manual entry)</span>{% endif %}</td><td>{{ badge(st) }}</td><td>{{ r.assessor_name or '' }}</td><td>{{ r.assessor_signed_at|date }}</td>
+      <td>{{ r.expires_at|date }}</td><td><a href="/records/{{ r.id }}">Record</a></td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No records.</td></tr>{% endfor %}
+  </table>
+</section>
+{% endblock %}
