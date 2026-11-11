@@ -259,3 +259,6 @@ td.nowrap { white-space: nowrap; }
   .card { overflow-x: auto; }  /* wide tables scroll inside their card instead of spilling out */
 }
 .back { margin: 0 0 .6rem; font-size: .95rem; }
+
+/* Space between a table and whatever follows it (buttons, notes, actions) */
+table + form, table + p, table + pre, table + .row, table + .actions, table + .btn, table + div { margin-top: 1rem; }
