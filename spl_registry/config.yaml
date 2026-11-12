@@ -1,5 +1,5 @@
 name: SPL Registry
-version: "0.13.0"
+version: "1.0.0"
 slug: spl_registry
 description: Inductions and checklists (preflights, QC, inspections) with photos, sign-off and records
 arch:
