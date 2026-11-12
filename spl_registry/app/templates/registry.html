@@ -91,7 +91,7 @@
   <table>
     <tr><th>Checklist</th><th>Started</th><th></th></tr>
     {% for r in drafts %}
-    <tr><td>{{ r.title }}</td><td>{{ r.started_at|local }}</td><td><a href="/runs/{{ r.id }}">Continue</a></td></tr>
+    <tr><td>{{ r.title }}</td><td>{{ r.started_at|local }}</td><td><a href="/records/checklist/{{ r.id }}">Continue</a></td></tr>
     {% endfor %}
   </table>
 </section>
@@ -107,51 +107,69 @@
   </div>
 
   {% if view == 'checklists' %}
-  <form method="get" action="/registry#records" class="row filters">
+  <form method="get" action="/registry#records" class="rec-filters">
     <input type="hidden" name="view" value="checklists">
-    <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {% if c|lower == category|lower %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+    <input type="search" name="q" value="{{ q }}" placeholder="Search checklist or person" class="rec-q">
     <select name="checklist"><option value="">All checklists</option>{% for c in all_checklists %}<option value="{{ c.id }}" {% if c.id == checklist %}selected{% endif %}>{{ c.title }}</option>{% endfor %}</select>
+    <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {% if c|lower == category|lower %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
     <select name="outcome"><option value="">Any outcome</option>{% for k, v in outcomes.items() %}<option value="{{ k }}" {% if k == outcome %}selected{% endif %}>{{ v[0] }}</option>{% endfor %}</select>
     <button class="btn secondary">Filter</button>
-    <a class="small" href="/export/checklists.csv?category={{ category|urlencode }}&checklist={{ checklist|urlencode }}&outcome={{ outcome|urlencode }}">Export CSV</a>
+    <a class="btn secondary" href="/export/checklists.csv?q={{ q|urlencode }}&checklist={{ checklist|urlencode }}&category={{ category|urlencode }}&outcome={{ outcome|urlencode }}">Export CSV</a>
   </form>
   {% if recent %}
   <div class="table-scroll">
-  <table>
-    <tr><th>Submitted</th><th>Checklist</th><th>Category</th><th>By</th><th>Outcome</th><th></th></tr>
+  <table class="rec-table">
+    <tr><th>Checklist</th><th>Category</th><th>Outcome</th><th>Submitted by</th><th>Submitted</th><th></th></tr>
     {% for r in recent %}{% set ol = outcome_label(r.outcome, r.outcome_label) %}
-    <tr><td>{{ r.submitted_at|local }}</td><td>{{ r.title }}</td><td>{{ r.category }}</td><td>{{ r.submitted_by }}</td>
+    <tr>
+      <td><strong>{{ r.title }}</strong></td>
+      <td>{{ r.category }}</td>
       <td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span>{% if r.amendments and r.amendments != '[]' %} <span class="badge flag">Amended</span>{% endif %}</td>
-      <td><a href="/runs/{{ r.id }}">View</a></td></tr>
+      <td>{{ r.submitted_by }}</td>
+      <td>{{ r.submitted_at|local }}</td>
+      <td><a href="/records/checklist/{{ r.id }}">View</a></td>
+    </tr>
     {% endfor %}
   </table>
   </div>
+  <p class="small muted">{{ recent|length }} record{{ 's' if recent|length != 1 }}{% if recent|length == 200 %} (the 200 most recent; narrow the filters to see older ones){% endif %}.</p>
   {% else %}
-  <p class="muted">No submitted checklists{% if category or checklist or outcome %} match these filters{% endif %}.</p>
+  <p class="muted">No submitted checklists{% if q or category or checklist or outcome %} match these filters{% endif %}.</p>
   {% endif %}
 
   {% else %}
-  <form method="get" action="/registry#records" class="row filters" role="search">
+  <form method="get" action="/registry#records" class="rec-filters">
     <input type="hidden" name="view" value="inductions">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search person or induction" class="rec-q">
+    <select name="induction"><option value="">All inductions</option>{% for i in all_inductions %}<option value="{{ i.id }}" {% if i.id == induction %}selected{% endif %}>{{ i.title }}</option>{% endfor %}</select>
     <select name="location"><option value="">All locations</option>{% for l in locations %}<option {% if l == location %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
-    {% if ind_categories|length > 1 %}<select name="type"><option value="">All categories</option>{% for c in ind_categories %}<option value="{{ c }}" {% if c == itype|lower %}selected{% endif %}>{{ c|capitalize }}</option>{% endfor %}</select>{% endif %}
-    <input type="search" id="reg-search" placeholder="Filter by name, email or UniKey">
-    <button class="btn secondary">Apply</button>
-    <a class="small" href="/export/register.csv?location={{ location|urlencode }}&type={{ itype|urlencode }}">Register CSV</a>
-    <a class="small" href="/export/records.csv">All induction records CSV</a>
+    {% if ind_categories|length > 1 %}<select name="category"><option value="">All categories</option>{% for c in ind_categories %}<option value="{{ c }}" {% if c == category|lower %}selected{% endif %}>{{ c|capitalize }}</option>{% endfor %}</select>{% endif %}
+    <select name="status"><option value="">Any status</option>{% for k, v in statuses.items() %}<option value="{{ k }}" {% if k == status %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+    <button class="btn secondary">Filter</button>
+    <a class="btn secondary" href="/export/records.csv?q={{ q|urlencode }}&induction={{ induction|urlencode }}&location={{ location|urlencode }}&category={{ category|urlencode }}&status={{ status|urlencode }}">Export CSV</a>
   </form>
+  {% if rows %}
   <div class="table-scroll">
-  <table class="register" id="register">
-    <tr><th>Person</th>{% for row, ind in inds %}<th class="rot"><a href="/inductions/{{ row.id }}">{{ ind.title }}</a><br><span class="small muted">{{ ind.location }}</span></th>{% endfor %}</tr>
-    {% for p, cells in rows %}
-    <tr data-search="{{ (p.name ~ ' ' ~ p.email ~ ' ' ~ (p.unikey or ''))|lower }}"><td><a href="/people/{{ p.id }}">{{ p.name }}</a> {% if p.unikey %}<code class="unikey">{{ p.unikey }}</code>{% else %}<span class="badge warn">UniKey missing</span>{% endif %}<br><span class="small muted">{{ p.email }}</span></td>
-      {% for r, st in cells %}
-      <td>{% if r %}<a class="badge {{ st[1] }}" href="/records/{{ r.id }}" title="{{ st[2]|join(', ') }}">{{ st[0] }}{% if st[2] %} *{% endif %}</a>{% if r.expires_at %}<br><span class="small muted">{{ r.expires_at|date }}</span>{% endif %}{% endif %}</td>
-      {% endfor %}</tr>
-    {% else %}<tr><td colspan="{{ inds|length + 1 }}" class="muted">No induction records yet. <a href="/records/new">Add a record</a> for an induction done before this app.</td></tr>{% endfor %}
+  <table class="rec-table">
+    <tr><th>Person</th><th>Induction</th><th>Category</th><th>Status</th><th>Valid until</th><th>Assessor</th><th>Date</th><th></th></tr>
+    {% for x in rows %}{% set r = x.r %}{% set st = x.status %}
+    <tr>
+      <td><a href="/people/{{ r.person_id }}"><strong>{{ r.person_name }}</strong></a> {% if r.person_unikey %}<code class="unikey">{{ r.person_unikey }}</code>{% else %}<span class="badge warn">UniKey missing</span>{% endif %}<br><span class="small muted">{{ r.person_email }}</span></td>
+      <td>{{ x.title }}{% if x.location %}<br><span class="small muted">{{ x.location }}</span>{% endif %}</td>
+      <td>{{ x.category|capitalize }}</td>
+      <td><span class="badge {{ st[1] }}" title="{{ st[2]|join(', ') }}">{{ st[0] }}{% if st[2] %} *{% endif %}</span>{% if r.entry_method == 'manual' %}<br><span class="small muted">manual entry</span>{% endif %}</td>
+      <td>{% if r.expires_at %}{{ r.expires_at|date }}{% elif r.status == 'complete' %}<span class="muted">No expiry</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+      <td>{{ r.assessor_name or '' }}</td>
+      <td>{{ (r.assessor_signed_at or r.created_at)|date }}</td>
+      <td><a href="/records/{{ r.id }}">View</a></td>
+    </tr>
+    {% endfor %}
   </table>
   </div>
-  <p class="small muted">* the SWP or RA behind the induction has changed since sign-off. Consider a refresher.</p>
+  <p class="small muted">{{ rows|length }} record{{ 's' if rows|length != 1 }}. * the SWP or RA behind the induction has changed since sign-off; consider a refresher.</p>
+  {% else %}
+  <p class="muted">No induction records{% if q or induction or location or category or status %} match these filters{% else %} yet. <a href="/records/new">Add a record</a> for an induction done before this app{% endif %}.</p>
+  {% endif %}
   {% endif %}
 </section>
 {% endblock %}

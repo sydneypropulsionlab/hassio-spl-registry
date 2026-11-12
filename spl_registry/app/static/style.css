@@ -433,3 +433,13 @@ main.rf-main { max-width: 780px; padding-bottom: 1rem; }
   .rf-actions-btns { width: 100%; }
   .rf-actions-btns .btn { flex: 1; padding-left: .5rem; padding-right: .5rem; }
 }
+.rec-type { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); background: var(--accent-tint); padding: .2rem .6rem; border-radius: 999px; margin-bottom: .35rem; }
+.badge.big, .big-badge .badge { font-size: .95rem; padding: .35rem .9rem; }
+/* Registry > Records: one row per record, the same filters on both tabs */
+.rec-filters { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 0 0 .9rem; }
+.rec-filters select, .rec-filters input { width: auto; flex: 1 1 10rem; min-width: 0; }
+.rec-filters .rec-q { flex: 2 1 16rem; }
+.rec-filters .btn { flex: none; }
+.rec-table { width: 100%; }
+.rec-table td { vertical-align: top; }
+.rec-table td:last-child { text-align: right; white-space: nowrap; }

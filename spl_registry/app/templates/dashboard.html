@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Hello, {{ me.name.split()[0] }}</h1>
-  <a class="btn" href="/registry">Start an induction or checklist</a>
+  <a class="btn" href="/registry">New Record</a>
 </div>
 
 <div class="stats">
@@ -29,7 +29,7 @@
     <tr><th>Submitted</th><th>Checklist</th><th>By</th><th>Outcome</th><th></th></tr>
     {% for r in recent_runs %}{% set ol = outcome_label(r.outcome, r.outcome_label) %}
     <tr><td>{{ r.submitted_at|local }}</td><td>{{ r.title }}</td><td>{{ r.submitted_by }}</td>
-      <td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span></td><td><a href="/runs/{{ r.id }}">View</a></td></tr>
+      <td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span></td><td><a href="/records/checklist/{{ r.id }}">View</a></td></tr>
     {% endfor %}
   </table>
   <p class="small"><a href="/registry?view=checklists#records">All checklist records</a></p>

@@ -2,13 +2,14 @@
 {% from "_status.html" import badge, kindlabel %}
 {% block title %}Record {{ r.id }}{% endblock %}
 {% block content %}
-<p class="back noprint"><a href="/people/{{ r.person_id }}">&larr; {{ r.person_name }}</a></p>
+<p class="back noprint"><a href="/registry#records">&larr; Registry</a></p>
 <div class="page-head">
   <div>
+    <span class="rec-type">Induction record</span>
     <h1>{{ ind.title }}</h1>
-    <p class="muted">Record {{ r.id }} · {{ ind.location }}{% if r.entry_method == 'manual' %} · <strong>manual entry</strong>{% endif %}</p>
+    <p class="muted">Record {{ r.id }} · <a href="/people/{{ r.person_id }}">{{ r.person_name }}</a>{% if ind.location %} · {{ ind.location }}{% endif %}{% if r.entry_method == 'manual' %} · <strong>manual entry</strong>{% endif %}</p>
   </div>
-  <div>{{ badge(status) }}</div>
+  <div class="big-badge">{{ badge(status) }}</div>
 </div>
 
 {% if newer %}

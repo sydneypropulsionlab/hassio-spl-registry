@@ -385,7 +385,8 @@ def wiki_page(request: Request):
 
 @app.get('/registry', response_class=HTMLResponse)
 def registry_page(request: Request, view: str = 'inductions', location: str = '', type: str = '',
-                  category: str = '', checklist: str = '', outcome: str = ''):
+                  category: str = '', checklist: str = '', outcome: str = '', q: str = '', induction: str = '',
+                  status: str = ''):
     """Everything in one place: start an induction or checklist, drafts, and the records."""
     me = require(request)
     view = 'checklists' if view == 'checklists' else 'inductions'
@@ -409,17 +410,19 @@ def registry_page(request: Request, view: str = 'inductions', location: str = ''
                wiki_enabled=wikisync.enabled(settings), wiki_pending=wikisync.pending(),
                has_both=bool(active_inds) and bool(active_chks), drafts=drafts)
     if view == 'checklists':
-        where, args = run_filters(category, checklist, outcome)
+        where, args = run_filters(category, checklist, outcome, q)
         every = db.q('SELECT id, title, category FROM checklists GROUP BY id ORDER BY title')
         ctx.update(recent=db.q(f'{RUN_LIST_SQL} WHERE {where} ORDER BY r.submitted_at DESC LIMIT 200', *args),
                    categories=checklists.categories(every), all_checklists=every, category=category,
-                   checklist=checklist, outcome=outcome, outcomes=checklists.OUTCOME_FILTERS,
+                   checklist=checklist, outcome=outcome, outcomes=checklists.OUTCOME_FILTERS, q=q,
                    outcome_label=checklists.outcome_label)
     else:
-        inds, rows = register_data(location, type)
-        ctx.update(inds=inds, rows=rows, location=location, itype=type,
-                   locations=sorted({r['location'] for r, _ in active_inds}),
-                   ind_categories=sorted({(r['type'] or '').lower() for r, _ in active_inds} - {''}))
+        every = db.q('SELECT id, title, type, location FROM inductions GROUP BY id ORDER BY title')
+        ctx.update(rows=induction_records(q, induction, location, category or type, status), q=q,
+                   induction=induction, location=location, category=category or type, status=status,
+                   all_inductions=every, locations=sorted({r['location'] for r in every if r['location']}),
+                   ind_categories=sorted({(r['type'] or '').lower() for r in every} - {''}),
+                   statuses=INDUCTION_STATUS_FILTERS)
     return render(request, 'registry.html', **ctx)
 
 
@@ -506,8 +509,12 @@ RUN_LIST_SQL = ('SELECT r.*, c.title, c.category FROM runs r JOIN checklists c O
                 'AND c.version = r.checklist_version')
 
 
-def run_filters(category, checklist, outcome):
+def run_filters(category, checklist, outcome, q=''):
     where, args = ["r.status = 'submitted'"], []
+    if q.strip():
+        where.append("(LOWER(c.title) LIKE ? OR LOWER(COALESCE(r.submitted_by, '')) LIKE ? "
+                     "OR LOWER(COALESCE(r.signed_name, '')) LIKE ?)")
+        args += [f'%{q.strip().lower()}%'] * 3
     if category:
         where.append('LOWER(c.category) = ?')
         args.append(category.lower())
@@ -529,7 +536,7 @@ def start_run(request: Request, chk_id: str, csrf: str = Form(...)):
     rid = db.run('INSERT INTO runs (checklist_id, checklist_version, assessor_id, started_at) VALUES (?,?,?,?)',
                  row['id'], row['version'], me['id'], db.now())
     db.audit(actor(me), 'checklist_started', 'run', rid, checklist=row['id'], version=row['version'])
-    return RedirectResponse(f'/runs/{rid}', status_code=303)
+    return RedirectResponse(f'/records/checklist/{rid}', status_code=303)
 
 
 def render_run(request, me, r, errors=None, photo_errors=None, status_code=200):
@@ -537,21 +544,24 @@ def render_run(request, me, r, errors=None, photo_errors=None, status_code=200):
     answers = db.loads(r['answers'])
     tpl = 'run_form.html' if r['status'] == 'draft' else 'run.html'
     started_by = db.one('SELECT name FROM assessors WHERE id = ?', r['assessor_id']) if r['assessor_id'] else None
+    history = [(h, db.loads(h['details'])) for h in
+               db.q("SELECT * FROM audit_log WHERE entity = 'run' AND entity_id = ? ORDER BY id", str(r['id']))]
     return render(request, tpl, status_code=status_code, me=me, r=r, chk=chk, answers=answers,
                   photos=checklists.photos(r['id']), errors=errors or {}, photo_errors=photo_errors or [],
                   amendments=json.loads(r['amendments'] or '[]'), limits_text=checklists.limits_text,
                   can_fail=checklists.can_fail, fmt_num=checklists.fmt_num,
                   outcome_label=checklists.outcome_label, started_by=started_by['name'] if started_by else '',
+                  history=history,
                   failed=checklists.failed_items(chk, answers) if r['status'] != 'draft' else [])
 
 
-@app.get('/runs/{rid}', response_class=HTMLResponse)
+@app.get('/records/checklist/{rid}', response_class=HTMLResponse)
 def run_page(request: Request, rid: int):
     me = require(request)
     return render_run(request, me, run_or_404(rid))
 
 
-@app.post('/runs/{rid}')
+@app.post('/records/checklist/{rid}')
 async def run_save(request: Request, rid: int):
     """Save a draft (answers and any photos chosen), delete a photo, or submit."""
     form = await request.form()
@@ -610,7 +620,7 @@ async def run_save(request: Request, rid: int):
         else:
             request.session['flash'] = f'Draft saved at {saved_at}.'
         anchor = re.sub(r'[^A-Za-z0-9_.-]', '', form.get('anchor', ''))
-        return RedirectResponse(f'/runs/{rid}' + (f'#i-{anchor}' if anchor else ''), status_code=303)
+        return RedirectResponse(f'/records/checklist/{rid}' + (f'#i-{anchor}' if anchor else ''), status_code=303)
 
     counts = {k: len(v) for k, v in checklists.photos(rid).items()}
     answers, errors, outcome, outcome_label = checklists.evaluate(chk, answers, counts)
@@ -630,10 +640,36 @@ async def run_save(request: Request, rid: int):
              outcome=outcome_label, failed=failed)
     label = outcome_label
     request.session['flash'] = f'{chk["title"]} submitted: {label}.'
-    return RedirectResponse(f'/runs/{rid}', status_code=303)
+    return RedirectResponse(f'/records/checklist/{rid}', status_code=303)
 
 
-@app.post('/runs/{rid}/discard')
+@app.get('/runs/{rid}')
+def run_redirect(rid: int):
+    """Checklist records used to live at /runs/<id>."""
+    return RedirectResponse(f'/records/checklist/{rid}', status_code=301)
+
+
+@app.post('/records/checklist/{rid}/delete')
+def run_delete(request: Request, rid: int, reason: str = Form(''), csrf: str = Form(...)):
+    me = require(request, csrf)
+    r = run_or_404(rid)
+    if r['status'] == 'draft':
+        raise HTTPException(400, 'Discard a draft instead.')
+    reason = ' '.join(reason.split())
+    if len(reason) < 3:
+        return message(request, 'Reason needed', 'Give a reason for deleting the record. It is kept in the audit log.',
+                       400, link=f'/records/checklist/{rid}')
+    # keep a short note of what was deleted (no answers or photos), so the audit log still makes sense
+    db.audit(actor(me), 'checklist_deleted', 'run', rid, reason=reason, checklist=r['title'],
+             submitted_by=r['submitted_by'], submitted=local(r['submitted_at']),
+             outcome=checklists.outcome_label(r['outcome'], r['outcome_label'])[0])
+    db.run('DELETE FROM attachments WHERE run_id = ?', rid)
+    db.run('DELETE FROM runs WHERE id = ?', rid)
+    request.session['flash'] = f'Checklist record {rid} ({r["title"]}) deleted.'
+    return RedirectResponse('/registry?view=checklists#records', status_code=303)
+
+
+@app.post('/records/checklist/{rid}/discard')
 def run_discard(request: Request, rid: int, csrf: str = Form(...)):
     me = require(request, csrf)
     r = run_or_404(rid)
@@ -646,7 +682,7 @@ def run_discard(request: Request, rid: int, csrf: str = Form(...)):
     return RedirectResponse('/registry', status_code=303)
 
 
-@app.post('/runs/{rid}/amend')
+@app.post('/records/checklist/{rid}/amend')
 def run_amend(request: Request, rid: int, reason: str = Form(''), note: str = Form(''), csrf: str = Form(...)):
     me = require(request, csrf)
     r = run_or_404(rid)
@@ -655,13 +691,13 @@ def run_amend(request: Request, rid: int, reason: str = Form(''), note: str = Fo
     reason, note = reason.strip()[:300], note.strip()[:2000]
     if not reason or not note:
         request.session['flash'] = 'An amendment needs both a reason and the correction itself.'
-        return RedirectResponse(f'/runs/{rid}#amend', status_code=303)
+        return RedirectResponse(f'/records/checklist/{rid}#amend', status_code=303)
     amendments = json.loads(r['amendments'] or '[]')
     amendments.append({'by': me['name'], 'at': db.now(), 'reason': reason, 'note': note})
     db.run('UPDATE runs SET amendments = ? WHERE id = ?', json.dumps(amendments), rid)
     db.audit(actor(me), 'checklist_amended', 'run', rid, reason=reason, note=note)
     request.session['flash'] = 'Amendment added.'
-    return RedirectResponse(f'/runs/{rid}#amendments', status_code=303)
+    return RedirectResponse(f'/records/checklist/{rid}#amendments', status_code=303)
 
 
 @app.get('/attachments/{aid}')
@@ -676,9 +712,9 @@ def attachment(request: Request, aid: int, thumb: int = 0):
 
 
 @app.get('/export/checklists.csv')
-def export_runs(request: Request, category: str = '', checklist: str = '', outcome: str = ''):
+def export_runs(request: Request, category: str = '', checklist: str = '', outcome: str = '', q: str = ''):
     me = require(request)
-    where, args = run_filters(category, checklist, outcome)
+    where, args = run_filters(category, checklist, outcome, q)
     out = []
     for r in db.q(f'{RUN_LIST_SQL} WHERE {where} ORDER BY r.submitted_at', *args):
         chk = json.loads(r['snapshot']) if r['snapshot'] else checklists.checklist(r['checklist_id'], r['checklist_version'])[1]
@@ -1455,29 +1491,44 @@ def person_page(request: Request, pid: int):
     return render(request, 'person.html', me=me, p=p, recs=recs)
 
 
-def register_data(location='', itype=''):
-    inds = [i for i in logic.active_inductions()
-            if (not location or i[0]['location'] == location)
-            and (not itype or (i[0]['type'] or '').lower() == itype.lower())]
-    people = db.q('SELECT * FROM people ORDER BY name')
-    latest = {}
-    # The most recent induction wins, by when it was done (manual records can be back-dated).
-    for r in db.q("SELECT * FROM records WHERE status NOT IN ('cancelled', 'superseded') "
-                  'ORDER BY COALESCE(assessor_signed_at, created_at), id'):
-        latest[(r['person_id'], r['induction_id'])] = r
-    rows = []
-    for p in people:
-        cells, any_rec = [], False
-        for row, ind in inds:
-            r = latest.get((p['id'], row['id']))
-            if r:
-                any_rec = True
-                cells.append((r, logic.status(r, settings, ind)))
-            else:
-                cells.append((None, None))
-        if any_rec:
-            rows.append((p, cells))
-    return inds, rows
+INDUCTION_STATUS_FILTERS = {'current': 'Current', 'expiring': 'Expiring soon', 'expired': 'Expired',
+                            'waiting': 'Waiting on someone', 'ended': 'Cancelled or replaced', 'all': 'Everything'}
+WAITING = ('In progress', 'Ready for sign-off', 'Awaiting confirmation', 'Confirmation link expired')
+
+
+def induction_records(q='', induction='', location='', category='', status=''):
+    """Induction records for the Registry's Records list, newest first, with the filters applied.
+    By default cancelled and replaced records are left out."""
+    rows = db.q('SELECT r.*, p.name AS person_name, p.email AS person_email, p.unikey AS person_unikey, '
+                'p.role AS person_role, COALESCE(a.name, r.assessor_text) AS assessor_name FROM records r '
+                'JOIN people p ON p.id = r.person_id LEFT JOIN assessors a ON a.id = r.assessor_id '
+                'ORDER BY COALESCE(r.assessor_signed_at, r.created_at) DESC, r.id DESC')
+    current = {}
+    out = []
+    ql = q.strip().lower()
+    for r in rows:
+        if r['induction_id'] not in current:
+            current[r['induction_id']] = logic.induction(r['induction_id'])[1]
+        cur = current[r['induction_id']]
+        snap = json.loads(r['snapshot']) if r['snapshot'] else (cur or {})
+        title = snap.get('title') or r['induction_id']
+        cat = ((cur or snap).get('type') or '')
+        loc = (cur or snap).get('location') or ''
+        label, cls, flags = logic.status(r, settings, cur)
+        ended = r['status'] in ('cancelled', 'superseded')
+        if status == 'ended' and not ended or status not in ('ended', 'all') and ended:
+            continue
+        if status == 'current' and label != 'Current' or status == 'expiring' and label != 'Expiring' \
+                or status == 'expired' and label != 'Expired' or status == 'waiting' and label not in WAITING:
+            continue
+        if induction and r['induction_id'] != induction or location and loc != location \
+                or category and cat.lower() != category.lower():
+            continue
+        if ql and ql not in ' '.join([r['person_name'], r['person_email'], r['person_unikey'] or '', title]).lower():
+            continue
+        out.append({'r': r, 'title': title, 'category': cat, 'location': loc, 'status': (label, cls, flags),
+                    'snap': snap})
+    return out
 
 
 def csv_response(filename, header, rows):
@@ -1490,17 +1541,16 @@ def csv_response(filename, header, rows):
 
 
 @app.get('/export/records.csv')
-def export_records(request: Request):
+def export_records(request: Request, q: str = '', induction: str = '', location: str = '', category: str = '',
+                   status: str = 'all'):
+    """Induction records as CSV, with the Registry's filters (no filters: every record)."""
     me = require(request)
     out = []
-    for r in db.q('SELECT r.*, p.name AS person_name, p.email AS person_email, p.unikey AS person_unikey, p.role AS person_role, '
-                  'COALESCE(a.name, r.assessor_text) AS assessor_name FROM records r JOIN people p ON p.id = r.person_id '
-                  'LEFT JOIN assessors a ON a.id = r.assessor_id ORDER BY r.id'):
-        _, cur = logic.induction(r['induction_id'])
-        label, _, flags = logic.status(r, settings, cur)
-        snap = json.loads(r['snapshot']) if r['snapshot'] else {}
-        out.append([r['id'], r['person_name'], r['person_email'], r['person_unikey'] or '', r['person_role'], r['induction_id'],
-                    snap.get('title', ''), r['induction_version'],
+    for x in reversed(induction_records(q, induction, location, category, status)):
+        r, snap = x['r'], x['snap']
+        label, _, flags = x['status']
+        out.append([r['id'], r['person_name'], r['person_email'], r['person_unikey'] or '', r['person_role'],
+                    r['induction_id'], x['title'], x['category'], x['location'], r['induction_version'],
                     '; '.join(f'{s["ref"]} v{s.get("version", "")} ({s.get("hash", "")})' for s in snap.get('sources', [])),
                     r['assessor_name'] or '', label, '; '.join(flags), local(r['inductee_signed_at']),
                     local(r['assessor_signed_at'], '%d %b %Y' if r['entry_method'] == 'manual' else '%d %b %Y %H:%M'),
@@ -1509,21 +1559,32 @@ def export_records(request: Request):
                     'Manual entry' if r['entry_method'] == 'manual' else 'In app'])
     db.audit(actor(me), 'export_records')
     return csv_response('induction-records.csv',
-                        ['Record', 'Name', 'Email', 'UniKey', 'Role', 'Induction ID', 'Induction', 'Checklist version',
-                         'Source documents', 'Assessor', 'Status', 'Flags', 'Inductee signed', 'Assessor signed',
-                         'Confirmed', 'Expires', 'Refresh months', 'Notes', 'Entry'], out)
+                        ['Record', 'Name', 'Email', 'UniKey', 'Role', 'Induction ID', 'Induction', 'Category',
+                         'Location', 'Checklist version', 'Source documents', 'Assessor', 'Status', 'Flags',
+                         'Inductee signed', 'Assessor signed', 'Confirmed', 'Expires', 'Refresh months', 'Notes',
+                         'Entry'], out)
 
 
 @app.get('/export/register.csv')
 def export_register(request: Request, location: str = '', type: str = ''):
+    """The older grid export (one row per person, one column per induction); kept for existing links."""
     me = require(request)
-    inds, rows = register_data(location, type)
+    inds = [i for i in logic.active_inductions()
+            if (not location or i[0]['location'] == location)
+            and (not type or (i[0]['type'] or '').lower() == type.lower())]
+    latest = {}
+    for x in reversed(induction_records()):
+        latest[(x['r']['person_id'], x['r']['induction_id'])] = x
+    people = {}
+    for (pid, _), x in latest.items():
+        people[pid] = x['r']
     out = []
-    for p, cells in rows:
-        line = [p['name'], p['email'], p['unikey'] or '', p['role']]
-        for r, st in cells:
-            line.append('' if not r else st[0] + (f' (until {local(r["expires_at"], "%d %b %Y")})'
-                                                  if r['expires_at'] else ''))
+    for pid, pr in sorted(people.items(), key=lambda kv: kv[1]['person_name'].lower()):
+        line = [pr['person_name'], pr['person_email'], pr['person_unikey'] or '', pr['person_role']]
+        for row, _ in inds:
+            x = latest.get((pid, row['id']))
+            line.append('' if not x else x['status'][0] + (f' (until {local(x["r"]["expires_at"], "%d %b %Y")})'
+                                                         if x['r']['expires_at'] else ''))
         out.append(line)
     db.audit(actor(me), 'export_register')
     return csv_response('induction-register.csv', ['Name', 'Email', 'UniKey', 'Role'] + [ind['title'] for _, ind in inds], out)

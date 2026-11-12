@@ -45,7 +45,7 @@
 {% if errors %}<p class="error rf-alert">{{ errors|length }} item{{ 's' if errors|length != 1 }} still need{{ 's' if errors|length == 1 }} an answer. They're marked in red below; your answers so far are saved.</p>{% endif %}
 {% for e in photo_errors %}<p class="error rf-alert">{{ e }}</p>{% endfor %}
 
-<form method="post" action="/runs/{{ r.id }}" enctype="multipart/form-data" id="run-form" class="run-form">
+<form method="post" action="/records/checklist/{{ r.id }}" enctype="multipart/form-data" id="run-form" class="run-form">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <input type="hidden" name="anchor" value="">
 <button name="action" value="save" class="default-submit" tabindex="-1" aria-hidden="true">Save</button>
@@ -162,7 +162,7 @@
 
 <details class="rf-discard">
   <summary>Discard this draft</summary>
-  <form method="post" action="/runs/{{ r.id }}/discard">
+  <form method="post" action="/records/checklist/{{ r.id }}/discard">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <p class="small">Deletes the answers and photos in this draft. Nothing has been submitted yet.</p>
     <button class="btn danger">Discard draft</button>

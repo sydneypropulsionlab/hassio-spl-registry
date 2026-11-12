@@ -594,11 +594,31 @@ def test_dashboard_is_an_overview(assessor):
     assert 'Start session' not in d and 'ind-search' not in d  # the list lives on the Registry page
     for label in ('Current inductions', 'People inducted', 'Waiting on someone', 'Expired', 'Expiring within'):
         assert label in d
-    assert 'href="/registry">Start an induction or checklist' in d
+    assert 'href="/registry">New Record</a>' in d
     i = c.get('/registry').text
-    assert 'id="ind-search"' in i and 'Start session' in i and 'id="register"' in i and '/records/new' in i
+    assert 'id="ind-search"' in i and 'Start session' in i and 'class="rec-table"' in i and '/records/new' in i
+    assert i.count('>Export CSV</a>') == 1 and 'Register CSV' not in i
     assert '>Registry</a>' in d and '>Inductions</a>' not in d and '>Register</a>' not in d
     # the old pages redirect
     for old, new in (('/inductions', '/registry'), ('/register?type=space', '/registry?type=space'),
                      ('/checklists?outcome=go', '/registry?view=checklists&outcome=go#records')):
         assert c.get(old, follow_redirects=False).headers['location'] == new
+
+
+def test_registry_records_list(assessor):
+    """Records > Inductions is a list, one row per record, with filters that the CSV export follows."""
+    c = assessor
+    page = c.get('/registry').text
+    rows = page.count('href="/records/')  - page.count('href="/records/new"')
+    assert rows >= 1
+    one = db.one("SELECT r.id, r.induction_id, p.name FROM records r JOIN people p ON p.id = r.person_id "
+                 "WHERE r.status NOT IN ('cancelled', 'superseded') LIMIT 1")
+    filtered = c.get('/registry', params={'q': one['name'], 'induction': one['induction_id']}).text
+    assert f'href="/records/{one["id"]}"' in filtered
+    none = c.get('/registry', params={'q': 'no-such-person-xyz'}).text
+    assert 'No induction records match these filters' in none
+    csv = c.get('/export/records.csv', params={'q': one['name'], 'induction': one['induction_id']}).text
+    assert csv.splitlines()[0].startswith('Record,Name,Email') and one['name'] in csv
+    assert len(c.get('/export/records.csv', params={'q': 'no-such-person-xyz'}).text.splitlines()) == 1
+    for st in ('current', 'expiring', 'expired', 'waiting', 'ended', 'all'):
+        assert c.get('/registry', params={'status': st}).status_code == 200

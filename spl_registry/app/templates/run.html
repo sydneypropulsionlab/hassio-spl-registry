@@ -1,28 +1,56 @@
 {% extends "base.html" %}
 {% from "_status.html" import refs %}
-{% block title %}{{ chk.title }} {{ r.submitted_at|date }}{% endblock %}
+{% block title %}Checklist record {{ r.id }}{% endblock %}
 {% macro thumbs(list) %}{% if list %}<div class="photos">{% for a in list %}<figure class="thumb"><a href="/attachments/{{ a.id }}" target="_blank"><img src="/attachments/{{ a.id }}?thumb=1" alt="Photo {{ loop.index }}" loading="lazy"></a>{% if a.taken_at %}<figcaption class="small muted">taken {{ a.taken_at.replace('T', ' ')[:16] }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% endif %}{% endmacro %}
 {% block content %}
 {% set ol = outcome_label(r.outcome, r.outcome_label) %}
+<p class="back noprint"><a href="/registry?view=checklists#records">&larr; Registry</a></p>
 <div class="page-head">
   <div>
-    {% if chk.category %}<span class="kind">{{ chk.category }}</span>{% endif %}
-    <h1>{{ chk.title }} <span class="badge {{ ol[1] }}">{{ ol[0] }}</span></h1>
-    <p class="small muted">Submitted {{ r.submitted_at|local }} by {{ r.submitted_by }} · record {{ r.id }} · {{ chk.id }}{% if chk.location %} · {{ chk.location }}{% endif %} · checklist version <code>{{ chk.version }}</code>{% if chk.wiki %} (wiki page v{{ chk.wiki.version }}){% endif %}</p>
+    <span class="rec-type">Checklist record</span>
+    <h1>{{ chk.title }}</h1>
+    <p class="muted">Record {{ r.id }}{% if chk.category %} · {{ chk.category }}{% endif %}{% if chk.location %} · {{ chk.location }}{% endif %}</p>
   </div>
-  <div class="actions no-print">
-    <button class="btn secondary" onclick="window.print()">Print / PDF</button>
-  </div>
+  <div><span class="badge {{ ol[1] }} big">{{ ol[0] }}</span></div>
 </div>
 
 {% if failed %}
 <p class="error"><strong>{{ failed|length }} item{{ 's' if failed|length != 1 }} failed:</strong> {% for it in failed %}{{ it.text }}{{ '; ' if not loop.last }}{% endfor %}</p>
 {% endif %}
-{% if amendments %}<p class="notice">This record has {{ amendments|length }} amendment{{ 's' if amendments|length != 1 }}; see the end of the page.</p>{% endif %}
+{% if amendments %}<p class="notice">This record has {{ amendments|length }} amendment{{ 's' if amendments|length != 1 }}; see <a href="#amendments">Amendments</a>.</p>{% endif %}
 
-{% for s in chk.sections %}
 <section class="card">
-  <h2>{{ s.title }}</h2>
+  <table class="kv">
+    <tr><th>Checklist</th><td>{{ chk.title }} <span class="small muted">({{ chk.id }})</span></td></tr>
+    <tr><th>Outcome</th><td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span>{% if failed %} <span class="small muted">{{ failed|length }} failed item{{ 's' if failed|length != 1 }}</span>{% endif %}</td></tr>
+    <tr><th>Submitted by</th><td>{{ r.submitted_by }}</td></tr>
+    <tr><th>Submitted</th><td>{{ r.submitted_at|local }}</td></tr>
+    {% if started_by %}<tr><th>Started</th><td>{{ r.started_at|local }} by {{ started_by }}</td></tr>{% endif %}
+    {% if r.signature or r.signed_name %}
+    <tr><th>Signed</th><td>{{ r.signed_name }}</td></tr>
+    {% if r.signature %}<tr><th>Signature</th><td><img class="sigimg" src="{{ r.signature }}" alt="Signature of {{ r.signed_name }}"></td></tr>{% endif %}
+    {% endif %}
+    <tr><th>Checklist version</th><td><code>{{ chk.version }}</code>{% if chk.wiki %} <span class="small muted">(wiki page v{{ chk.wiki.version }})</span>{% endif %}</td></tr>
+  </table>
+  <div class="row noprint">
+    <button class="btn secondary" onclick="window.print()">Print / PDF</button>
+    <a class="btn secondary" href="#amend">Add an amendment</a>
+  </div>
+  <details class="noprint delete-box">
+    <summary>Delete this record</summary>
+    <form method="post" action="/records/checklist/{{ r.id }}/delete" class="stack" onsubmit="return confirm('Permanently delete checklist record {{ r.id }}? This cannot be undone.')">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <p class="small">Deleting removes the record, its answers and its photos completely. Only a short note (checklist, who submitted it, when, the outcome, who deleted it and why) stays in the audit log. To correct a record and keep it, add an amendment instead.</p>
+      <label>Reason <input name="reason" required placeholder="e.g. submitted against the wrong aircraft" autocomplete="off"></label>
+      <button class="btn danger">Delete permanently</button>
+    </form>
+  </details>
+</section>
+
+<section class="card">
+  <h2>Checklist</h2>
+  {% for s in chk.sections %}
+  <h3>{{ s.title }}</h3>
   <ul class="checklist run-record">
   {% for it in s['items'] %}{% set a = answers.get(it.id, {}) %}
     <li class="item {{ it.kind }}">
@@ -52,22 +80,14 @@
     </li>
   {% endfor %}
   </ul>
+  {% endfor %}
 </section>
-{% endfor %}
 
 {% if r.comments or photos.get('') %}
 <section class="card">
   <h2>Comments and photos</h2>
   {% if r.comments %}<div class="rich">{{ r.comments|safe }}</div>{% endif %}
   {{ thumbs(photos.get('', [])) }}
-</section>
-{% endif %}
-
-{% if r.signature or r.signed_name %}
-<section class="card">
-  <h2>Signed</h2>
-  <p>{{ r.signed_name }}{% if r.submitted_at %}, {{ r.submitted_at|local }}{% endif %}</p>
-  {% if r.signature %}<img class="sigimg" src="{{ r.signature }}" alt="Signature of {{ r.signed_name }}">{% endif %}
 </section>
 {% endif %}
 
@@ -79,9 +99,9 @@
     {% for m in amendments %}<tr><td>{{ m.at|local }}</td><td>{{ m.by }}</td><td>{{ m.reason }}</td><td>{{ m.note }}</td></tr>{% endfor %}
   </table>
   {% else %}<p class="muted small">None. A submitted checklist can't be edited; a correction is added here with a reason, and the original answers stay as they were.</p>{% endif %}
-  <details class="no-print" id="amend">
+  <details class="noprint" id="amend">
     <summary>Add an amendment</summary>
-    <form method="post" action="/runs/{{ r.id }}/amend" class="stack narrow-form">
+    <form method="post" action="/records/checklist/{{ r.id }}/amend" class="stack narrow-form">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <label>Reason <input type="text" name="reason" maxlength="300" required placeholder="e.g. battery voltage entered wrong"></label>
       <label>Correction <textarea name="note" rows="3" maxlength="2000" required></textarea></label>
@@ -89,5 +109,14 @@
     </form>
   </details>
 </section>
-<p class="no-print"><a class="back" href="/registry?view=checklists#records">← Registry</a></p>
+
+<section class="card noprint">
+  <h2>History</h2>
+  <table>
+    {% for h, d in history %}<tr><td>{{ h.at|local }}</td><td>{{ h.actor }}</td><td>{{ h.action|replace('_', ' ')|replace('checklist ', '') }}
+      {% if d.reason %}<br><span class="small">Reason: {{ d.reason }}</span>{% endif %}
+      {% if d.note %}<br><span class="small muted">{{ d.note }}</span>{% endif %}
+    </td></tr>{% endfor %}
+  </table>
+</section>
 {% endblock %}
