@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Set up{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Set up SPL Registry</h1>
+  <p>Create the first assessor account. You can add the other assessors after logging in.</p>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/setup" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Name <input name="name" required autocomplete="name"></label>
+    <label>Email <input name="email" type="email" required autocomplete="email"></label>
+    <label>Password (at least 10 characters) <input name="password" type="password" minlength="10" required autocomplete="new-password"></label>
+    <button class="btn">Create account</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Or restore from a backup</h2>
+  <p>Moving to a new Home Assistant, or starting again? Upload a <code>.db</code> backup downloaded from the app's Backup page. Everything comes back, including all assessor accounts and passwords, so there's nothing to set up.</p>
+  {% if restore_error %}<p class="error">{{ restore_error }}</p>{% endif %}
+  <form method="post" action="/setup/restore" enctype="multipart/form-data" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="file" name="file" accept=".db,application/vnd.sqlite3,application/octet-stream" required>
+    <button class="btn secondary">Check backup</button>
+  </form>
+</div>
+{% endblock %}

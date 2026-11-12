@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Registry{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block bodyclass %}wiki-check{% endblock %}
+{% block content %}
+{% if wiki_pending %}<p class="error wiki-held">The wiki has a new version that would retire {{ wiki_pending.retired|join(', ') }}, so it hasn't been loaded. <a href="/wiki">Review it on Wiki and bundles</a>.</p>{% endif %}
+<div class="page-head">
+  <h1>Registry</h1>
+  <div class="actions">
+    {% if wiki_enabled %}
+    <form method="post" action="/inductions/sync">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="next" value="/registry">
+      <button class="btn secondary">Update Registry</button>
+    </form>
+    {% endif %}
+    <a class="btn secondary" href="/records/new">Add a record</a>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Start</h2>
+  {% if start %}
+  <div class="ind-tools">
+    <input type="search" id="ind-search" placeholder="Search by name, room, equipment, category or ID…" autocomplete="off">
+    {% if has_both %}
+    <div class="seg" role="group" aria-label="Type" data-filter="rtype">
+      <button type="button" class="active" data-value="">All</button>
+      <button type="button" data-value="induction">Inductions</button>
+      <button type="button" data-value="checklist">Checklists</button>
+    </div>
+    {% endif %}
+    {% if start_categories|length > 1 %}
+    <div class="seg" role="group" aria-label="Category" data-filter="cat">
+      <button type="button" class="active" data-value="">All</button>
+      {% for c in start_categories %}<button type="button" data-value="{{ c|lower }}">{{ c|capitalize }}</button>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% for loc, group in groups %}
+  <div class="ind-group">
+    <h3>{{ loc or 'Anywhere' }}</h3>
+    <ul class="ind-list">
+    {% for s in group %}{% set row, rec = s.row, s.rec %}
+      {% if s.rtype == 'induction' %}
+      <li class="ind-row" data-rtype="induction" data-cat="{{ row.type|lower }}" data-search="{{ (rec.title ~ ' ' ~ rec.location ~ ' ' ~ row.type ~ ' ' ~ row.id ~ ' induction ' ~ grants_access(rec)|join(' '))|lower }}">
+        <div class="ind-main">
+          <span><span class="kind {{ row.type|lower }}">{{ row.type|capitalize }}</span> <span class="small muted">induction</span></span>
+          <strong>{{ rec.title }}</strong>
+          {% if grants_access(rec) %}<span class="small muted">Grants access: {{ grants_access(rec)|join(', ') }}</span>{% endif %}
+          <span class="small muted">{{ row.id }} · {% if row.refresh_months %}refresh {{ row.refresh_months }} months{% else %}no expiry{% endif %}{% for src in rec.sources %} · {{ src.ref }}{% if src.version %} {{ 'draft' if src.version == 'draft' else 'v' ~ src.version }}{% endif %}{% endfor %}{% if rec.wiki %} · wiki page v{{ rec.wiki.version }}{% endif %} · <code>{{ row.version }}</code></span>
+        </div>
+        <div class="ind-actions">
+          <a class="small" href="/inductions/{{ row.id }}">Preview</a>
+          <form method="post" action="/sessions">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="induction_id" value="{{ row.id }}">
+            <button class="btn">Start session</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="ind-row" data-rtype="checklist" data-cat="{{ row.category|lower }}" data-search="{{ (rec.title ~ ' ' ~ row.category ~ ' ' ~ row.location ~ ' ' ~ row.id ~ ' checklist')|lower }}">
+        <div class="ind-main">
+          <span>{% if row.category %}<span class="kind">{{ row.category|capitalize }}</span> {% endif %}<span class="small muted">checklist</span></span>
+          <strong>{{ rec.title }}</strong>
+          {% if rec.description %}<span class="small muted">{{ rec.description }}</span>{% endif %}
+          <span class="small muted">{{ row.id }} · outcome {{ row.outcome }}{% if rec.signature_required %} · signed{% endif %}{% if rec.wiki %} · wiki page v{{ rec.wiki.version }}{% endif %} · <code>{{ row.version }}</code></span>
+        </div>
+        <div class="ind-actions">
+          <form method="post" action="/checklists/{{ row.id }}/start">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="btn">Start</button>
+          </form>
+        </div>
+      </li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  <p class="muted small" id="ind-none" hidden>Nothing matches.</p>
+  {% else %}
+  <p>Nothing loaded yet. Write pages on the wiki tagged <code>record</code> and approve them; see <a href="/wiki">Wiki and bundles</a>.</p>
+  {% endif %}
+</section>
+
+{% if drafts %}
+<section class="card">
+  <h2>Checklists in progress</h2>
+  <table>
+    <tr><th>Checklist</th><th>Started</th><th></th></tr>
+    {% for r in drafts %}
+    <tr><td>{{ r.title }}</td><td>{{ r.started_at|local }}</td><td><a href="/runs/{{ r.id }}">Continue</a></td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+
+<section class="card" id="records">
+  <div class="page-head">
+    <h2>Records</h2>
+    <div class="seg tabs" role="tablist">
+      <a href="/registry?view=inductions#records" class="{{ 'active' if view == 'inductions' }}">Inductions</a>
+      <a href="/registry?view=checklists#records" class="{{ 'active' if view == 'checklists' }}">Checklists</a>
+    </div>
+  </div>
+
+  {% if view == 'checklists' %}
+  <form method="get" action="/registry#records" class="row filters">
+    <input type="hidden" name="view" value="checklists">
+    <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {% if c|lower == category|lower %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+    <select name="checklist"><option value="">All checklists</option>{% for c in all_checklists %}<option value="{{ c.id }}" {% if c.id == checklist %}selected{% endif %}>{{ c.title }}</option>{% endfor %}</select>
+    <select name="outcome"><option value="">Any outcome</option>{% for k, v in outcomes.items() %}<option value="{{ k }}" {% if k == outcome %}selected{% endif %}>{{ v[0] }}</option>{% endfor %}</select>
+    <button class="btn secondary">Filter</button>
+    <a class="small" href="/export/checklists.csv?category={{ category|urlencode }}&checklist={{ checklist|urlencode }}&outcome={{ outcome|urlencode }}">Export CSV</a>
+  </form>
+  {% if recent %}
+  <div class="table-scroll">
+  <table>
+    <tr><th>Submitted</th><th>Checklist</th><th>Category</th><th>By</th><th>Outcome</th><th></th></tr>
+    {% for r in recent %}{% set ol = outcome_label(r.outcome, r.outcome_label) %}
+    <tr><td>{{ r.submitted_at|local }}</td><td>{{ r.title }}</td><td>{{ r.category }}</td><td>{{ r.submitted_by }}</td>
+      <td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span>{% if r.amendments and r.amendments != '[]' %} <span class="badge flag">Amended</span>{% endif %}</td>
+      <td><a href="/runs/{{ r.id }}">View</a></td></tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">No submitted checklists{% if category or checklist or outcome %} match these filters{% endif %}.</p>
+  {% endif %}
+
+  {% else %}
+  <form method="get" action="/registry#records" class="row filters" role="search">
+    <input type="hidden" name="view" value="inductions">
+    <select name="location"><option value="">All locations</option>{% for l in locations %}<option {% if l == location %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    {% if ind_categories|length > 1 %}<select name="type"><option value="">All categories</option>{% for c in ind_categories %}<option value="{{ c }}" {% if c == itype|lower %}selected{% endif %}>{{ c|capitalize }}</option>{% endfor %}</select>{% endif %}
+    <input type="search" id="reg-search" placeholder="Filter by name, email or UniKey">
+    <button class="btn secondary">Apply</button>
+    <a class="small" href="/export/register.csv?location={{ location|urlencode }}&type={{ itype|urlencode }}">Register CSV</a>
+    <a class="small" href="/export/records.csv">All induction records CSV</a>
+  </form>
+  <div class="table-scroll">
+  <table class="register" id="register">
+    <tr><th>Person</th>{% for row, ind in inds %}<th class="rot"><a href="/inductions/{{ row.id }}">{{ ind.title }}</a><br><span class="small muted">{{ ind.location }}</span></th>{% endfor %}</tr>
+    {% for p, cells in rows %}
+    <tr data-search="{{ (p.name ~ ' ' ~ p.email ~ ' ' ~ (p.unikey or ''))|lower }}"><td><a href="/people/{{ p.id }}">{{ p.name }}</a> {% if p.unikey %}<code class="unikey">{{ p.unikey }}</code>{% else %}<span class="badge warn">UniKey missing</span>{% endif %}<br><span class="small muted">{{ p.email }}</span></td>
+      {% for r, st in cells %}
+      <td>{% if r %}<a class="badge {{ st[1] }}" href="/records/{{ r.id }}" title="{{ st[2]|join(', ') }}">{{ st[0] }}{% if st[2] %} *{% endif %}</a>{% if r.expires_at %}<br><span class="small muted">{{ r.expires_at|date }}</span>{% endif %}{% endif %}</td>
+      {% endfor %}</tr>
+    {% else %}<tr><td colspan="{{ inds|length + 1 }}" class="muted">No induction records yet. <a href="/records/new">Add a record</a> for an induction done before this app.</td></tr>{% endfor %}
+  </table>
+  </div>
+  <p class="small muted">* the SWP or RA behind the induction has changed since sign-off. Consider a refresher.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var box = document.getElementById('ind-search');
+  if (!box) return;
+  var f = { rtype: '', cat: '' };
+  function apply() {
+    var q = box.value.trim().toLowerCase(), any = false;
+    document.querySelectorAll('.ind-group').forEach(function (g) {
+      var shown = 0;
+      g.querySelectorAll('.ind-row').forEach(function (r) {
+        var ok = (!f.rtype || r.dataset.rtype === f.rtype) && (!f.cat || r.dataset.cat === f.cat)
+          && (!q || r.dataset.search.indexOf(q) >= 0);
+        r.hidden = !ok; if (ok) shown++;
+      });
+      g.hidden = !shown; if (shown) any = true;
+    });
+    document.getElementById('ind-none').hidden = any;
+  }
+  box.addEventListener('input', apply);
+  document.querySelectorAll('.seg[data-filter]').forEach(function (seg) {
+    seg.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        seg.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active'); f[seg.dataset.filter] = b.dataset.value; apply();
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

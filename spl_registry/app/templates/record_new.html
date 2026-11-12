@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Add a record{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/registry">&larr; Registry</a></p>
+<div class="card">
+  <h1>Add a record</h1>
+  <p class="muted">For an induction done outside this app, such as one recorded on the old Google Form or on paper. The record is added as complete, with no checklist or email confirmation, and is marked as a manual entry.</p>
+  {% if errors %}<div class="error">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <form method="post" action="/records/new" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Person</h2>
+    <label>Full name <input name="name" value="{{ f.name or '' }}" required autocomplete="off"></label>
+    <label>Email <input name="email" type="email" value="{{ f.email or '' }}" required autocomplete="off"></label>
+    <label>UniKey <input name="unikey" value="{{ f.unikey or '' }}" required autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z]{2,8}[0-9]{1,6}" placeholder="e.g. abcd1234"></label>
+    <label>Role
+      <select name="role">
+        <option value="">Choose…</option>
+        {% for r in roles %}<option {% if f.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+    </label>
+
+    <h2>Induction</h2>
+    <label>Induction
+      <select name="induction_id" id="induction" required>
+        <option value="">Choose…</option>
+        {% for row, ind in inductions %}<option value="{{ row.id }}" data-refresh="{{ row.refresh_months }}" {% if f.induction_id == row.id %}selected{% endif %}>{{ ind.title }} ({{ ind.location }})</option>{% endfor %}
+      </select>
+    </label>
+    <label>Date of induction <input name="induction_date" type="date" value="{{ f.induction_date or '' }}" max="{{ today }}" required></label>
+    <label>Done by
+      <select name="assessor_id" id="assessor">
+        {% for a in assessors %}<option value="{{ a.id }}" {% if f.assessor_id == a.id|string %}selected{% endif %}>{{ a.name }}{% if not a.active %} (inactive){% endif %}</option>{% endfor %}
+        <option value="other" {% if f.assessor_id == 'other' %}selected{% endif %}>Someone else…</option>
+      </select>
+    </label>
+    <label id="assessor-text-row" {% if f.assessor_id != 'other' %}hidden{% endif %}>Their name <input name="assessor_text" value="{{ f.assessor_text or '' }}" autocomplete="off"></label>
+    <label>Refresh after (months, 0 for no expiry) <input name="refresh_months" id="refresh" type="number" min="0" max="120" value="{{ f.refresh_months or '' }}" placeholder="Induction default"></label>
+    <p class="small muted" id="expiry-hint"></p>
+    <label>Notes (optional) <textarea name="notes" rows="3" placeholder="Where the original record is kept, e.g. Google Form response or paper form">{{ f.notes or '' }}</textarea></label>
+    <button class="btn">Add record</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var ind = document.getElementById('induction'), refresh = document.getElementById('refresh'),
+      date = document.querySelector('input[name=induction_date]'), hint = document.getElementById('expiry-hint'),
+      who = document.getElementById('assessor'), whoText = document.getElementById('assessor-text-row');
+  function update() {
+    var opt = ind.options[ind.selectedIndex];
+    var def = opt && opt.dataset.refresh;
+    refresh.placeholder = def !== undefined ? 'Induction default: ' + def : 'Induction default';
+    var months = refresh.value !== '' ? parseInt(refresh.value, 10) : (def !== undefined ? parseInt(def, 10) : NaN);
+    if (!date.value || isNaN(months)) { hint.textContent = ''; return; }
+    if (months === 0) { hint.textContent = 'No expiry.'; return; }
+    var d = new Date(date.value + 'T12:00:00'), day = d.getDate();
+    d.setMonth(d.getMonth() + months);
+    if (d.getDate() !== day) d.setDate(0);
+    hint.textContent = 'Valid until ' + d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) +
+      (d < new Date() ? ' (already expired)' : '') + '.';
+  }
+  [ind, refresh, date].forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
+  who.addEventListener('change', function () { whoText.hidden = who.value !== 'other'; });
+  update();
+})();
+</script>
+{% endblock %}

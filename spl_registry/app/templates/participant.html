@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_status.html" import refs, kindlabel %}
+{% block title %}{{ ind.title }}{% endblock %}
+{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<div id="pstate" data-url="/p/{{ token }}/state" data-status="{{ r.status }}"></div>
+<p class="small muted">{{ ind.location }} · {{ r.person_name }}</p>
+<h1>{{ ind.title }}</h1>
+
+{% if r.status == 'joined' %}
+<p class="notice">Follow along with your assessor. Tick each <strong>I acknowledge</strong> item yourself once you understand it. Items your assessor covers or watches you demonstrate tick themselves as they go.</p>
+<p class="progress-line"><span id="progress">{{ prog.done }} of {{ prog.total }}</span> done</p>
+{% elif r.status == 'inductee_signed' %}
+<div class="card center ok-card"><h2>Signed. Thank you.</h2><p>Your assessor will now sign off your induction. You'll then get an email asking you to confirm it.</p></div>
+{% elif r.status == 'awaiting_confirmation' %}
+<div class="card center ok-card"><h2>Check your email</h2><p>Your assessor has signed off. We've emailed <strong>{{ r.person_email }}</strong> a link to confirm your induction. It isn't complete until you confirm.</p></div>
+{% elif r.status == 'complete' %}
+<div class="card center ok-card"><h2>Induction complete</h2><p>Your induction is confirmed. A copy was emailed to you.</p></div>
+{% else %}
+<div class="card center"><h2>This induction was cancelled</h2><p>Ask your assessor if this is unexpected.</p></div>
+{% endif %}
+
+{% if r.status == 'joined' %}
+{% for sec in ind.sections %}
+<section class="card">
+  <h2>{{ sec.title }}</h2>
+  <ul class="checklist">
+  {% for it in sec['items'] %}
+    <li class="item {{ it.kind }} {% if it.id in ticks or it.id in demo or it.id in ack %}done{% endif %}" data-item="{{ it.id }}">
+      {% if it.kind == 'ack' %}
+      <label class="tick"><input type="checkbox" data-tick="/p/{{ token }}/ack" data-item="{{ it.id }}" {% if it.id in ack %}checked{% endif %}> <span><span class="who">I acknowledge</span> {{ it.text|linkify }}</span></label>
+      {% elif it.kind in ('check', 'demo') %}
+      <div class="tick"><span class="auto-tick" aria-hidden="true"></span><span><span class="who">{{ 'Assessor covers' if it.kind == 'check' else 'You demonstrate' }}</span> {{ it.text|linkify }}</span></div>
+      {% else %}
+      <span class="who">Information</span> {{ it.text|linkify }}
+      {% endif %}
+      {{ refs(it) }}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<section class="card" id="sign-card">
+  <h2>Sign</h2>
+  <form method="post" action="/p/{{ token }}/sign" class="stack" id="sign-form">
+    <label class="tick"><input type="checkbox" name="declaration" value="yes" required> <span>I have been taken through this induction, I understand it, and I will follow the Safe Work Procedure. I will ask before doing anything I am unsure about.</span></label>
+    <label>Type your full name to sign <input name="typed_name" required autocomplete="off" placeholder="{{ r.person_name }}"></label>
+    {% if ind.signature_required %}
+    <p class="label">Draw your signature</p>
+    <div class="sig"><canvas id="sig-canvas" width="600" height="180"></canvas><button type="button" class="link" id="sig-clear">Clear</button></div>
+    <input type="hidden" name="signature" id="sig-data">
+    {% endif %}
+    <button class="btn" id="sign-btn" {% if not prog.complete %}disabled{% endif %}>Sign induction</button>
+    <p class="small muted" id="sign-hint" {% if prog.complete %}hidden{% endif %}>The button unlocks when every item is ticked.</p>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

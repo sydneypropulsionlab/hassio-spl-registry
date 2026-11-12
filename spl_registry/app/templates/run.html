@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_status.html" import refs %}
+{% block title %}{{ chk.title }} {{ r.submitted_at|date }}{% endblock %}
+{% macro thumbs(list) %}{% if list %}<div class="photos">{% for a in list %}<figure class="thumb"><a href="/attachments/{{ a.id }}" target="_blank"><img src="/attachments/{{ a.id }}?thumb=1" alt="Photo {{ loop.index }}" loading="lazy"></a>{% if a.taken_at %}<figcaption class="small muted">taken {{ a.taken_at.replace('T', ' ')[:16] }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% endif %}{% endmacro %}
+{% block content %}
+{% set ol = outcome_label(r.outcome, r.outcome_label) %}
+<div class="page-head">
+  <div>
+    {% if chk.category %}<span class="kind">{{ chk.category }}</span>{% endif %}
+    <h1>{{ chk.title }} <span class="badge {{ ol[1] }}">{{ ol[0] }}</span></h1>
+    <p class="small muted">Submitted {{ r.submitted_at|local }} by {{ r.submitted_by }} · record {{ r.id }} · {{ chk.id }}{% if chk.location %} · {{ chk.location }}{% endif %} · checklist version <code>{{ chk.version }}</code>{% if chk.wiki %} (wiki page v{{ chk.wiki.version }}){% endif %}</p>
+  </div>
+  <div class="actions no-print">
+    <button class="btn secondary" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+{% if failed %}
+<p class="error"><strong>{{ failed|length }} item{{ 's' if failed|length != 1 }} failed:</strong> {% for it in failed %}{{ it.text }}{{ '; ' if not loop.last }}{% endfor %}</p>
+{% endif %}
+{% if amendments %}<p class="notice">This record has {{ amendments|length }} amendment{{ 's' if amendments|length != 1 }}; see the end of the page.</p>{% endif %}
+
+{% for s in chk.sections %}
+<section class="card">
+  <h2>{{ s.title }}</h2>
+  <ul class="checklist run-record">
+  {% for it in s['items'] %}{% set a = answers.get(it.id, {}) %}
+    <li class="item {{ it.kind }}">
+    {% if it.kind == 'info' %}
+      <p class="muted">{{ it.text|linkify }}</p>
+    {% else %}
+      <div class="q">{{ it.text|linkify }}</div>
+      <div class="answer">
+      {% if it.kind in ('check', 'ack') %}
+        {% if a.value %}<span class="badge ok">✓ Done</span>{% else %}<span class="badge muted">Not ticked</span>{% endif %}
+      {% elif it.kind == 'pass' %}
+        {% if a.value %}<span class="badge {{ {'pass': 'ok', 'fail': 'bad', 'na': 'muted'}[a.value] }}">{{ {'pass': 'Pass', 'fail': 'Fail', 'na': 'N/A'}[a.value] }}</span>{% else %}<span class="muted">—</span>{% endif %}
+      {% elif it.kind == 'num' %}
+        {% if a.value %}<strong>{{ a.value }}{% if it.unit %} {{ it.unit }}{% endif %}</strong>{% if a.result %} <span class="badge {{ 'ok' if a.result == 'pass' else 'bad' }}">{{ 'In limits' if a.result == 'pass' else 'Out of limits' }}</span>{% endif %}{% if 'min' in it or 'max' in it %} <span class="small muted">({{ limits_text(it) }})</span>{% endif %}{% else %}<span class="muted">—</span>{% endif %}
+      {% elif it.kind == 'select' %}
+        {% if a.value %}<strong>{{ a.value }}</strong>{% if a.result == 'fail' %} <span class="badge bad">Fail</span>{% endif %}{% else %}<span class="muted">—</span>{% endif %}
+      {% elif it.kind == 'text' %}
+        {% if a.value %}{{ a.value }}{% else %}<span class="muted">—</span>{% endif %}
+      {% elif it.kind == 'rich' %}
+        {% if a.value %}<div class="rich">{{ a.value|safe }}</div>{% else %}<span class="muted">—</span>{% endif %}
+      {% endif %}
+      </div>
+      {% if a.comment %}<p class="small"><strong>Comment:</strong> {{ a.comment }}</p>{% endif %}
+      {{ thumbs(photos.get(it.id, [])) }}
+      {{ refs(it) }}
+    {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+{% if r.comments or photos.get('') %}
+<section class="card">
+  <h2>Comments and photos</h2>
+  {% if r.comments %}<div class="rich">{{ r.comments|safe }}</div>{% endif %}
+  {{ thumbs(photos.get('', [])) }}
+</section>
+{% endif %}
+
+{% if r.signature or r.signed_name %}
+<section class="card">
+  <h2>Signed</h2>
+  <p>{{ r.signed_name }}{% if r.submitted_at %}, {{ r.submitted_at|local }}{% endif %}</p>
+  {% if r.signature %}<img class="sigimg" src="{{ r.signature }}" alt="Signature of {{ r.signed_name }}">{% endif %}
+</section>
+{% endif %}
+
+<section class="card" id="amendments">
+  <h2>Amendments</h2>
+  {% if amendments %}
+  <table>
+    <tr><th>When</th><th>By</th><th>Reason</th><th>Correction</th></tr>
+    {% for m in amendments %}<tr><td>{{ m.at|local }}</td><td>{{ m.by }}</td><td>{{ m.reason }}</td><td>{{ m.note }}</td></tr>{% endfor %}
+  </table>
+  {% else %}<p class="muted small">None. A submitted checklist can't be edited; a correction is added here with a reason, and the original answers stay as they were.</p>{% endif %}
+  <details class="no-print" id="amend">
+    <summary>Add an amendment</summary>
+    <form method="post" action="/runs/{{ r.id }}/amend" class="stack narrow-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Reason <input type="text" name="reason" maxlength="300" required placeholder="e.g. battery voltage entered wrong"></label>
+      <label>Correction <textarea name="note" rows="3" maxlength="2000" required></textarea></label>
+      <button class="btn">Add amendment</button>
+    </form>
+  </details>
+</section>
+<p class="no-print"><a class="back" href="/registry?view=checklists#records">← Registry</a></p>
+{% endblock %}

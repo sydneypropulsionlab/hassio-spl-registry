@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% from "_status.html" import refs %}
+{% block title %}{{ chk.title }}{% endblock %}
+{% block mainclass %}rf-main{% endblock %}
+{% macro camera() %}<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>{% endmacro %}
+{% macro photo_block(key, label, existing, required=false) %}
+<div class="rf-photos">
+  {% for a in existing %}
+  <figure class="rf-thumb">
+    <a href="/attachments/{{ a.id }}" target="_blank"><img src="/attachments/{{ a.id }}?thumb=1" alt="Photo {{ loop.index }}" loading="lazy"></a>
+    <button class="rf-thumb-x" name="action" value="delete:{{ a.id }}" formnovalidate aria-label="Remove photo {{ loop.index }}">×</button>
+  </figure>
+  {% endfor %}
+  <label class="rf-add{% if required and not existing %} needed{% endif %}">
+    {{ camera() }}
+    <span>{{ label if not existing else 'Add another' }}</span>
+    {% if required and not existing %}<span class="rf-req">Required</span>{% endif %}
+    <input type="file" name="photo_{{ key }}" accept="image/*" multiple data-autosave="{{ key }}">
+  </label>
+</div>
+{% endmacro %}
+{% block content %}
+{% set n_items = namespace(n=0) %}{% for s in chk.sections %}{% for it in s['items'] %}{% if it.kind != 'info' %}{% set n_items.n = n_items.n + 1 %}{% endif %}{% endfor %}{% endfor %}
+{% set rule = outcome_words(chk)|join(' / ') %}
+
+<header class="rf-head">
+  <div class="rf-eyebrow">
+    {% if chk.category %}<span class="rf-chip">{{ chk.category }}</span>{% endif %}
+    <span class="rf-draft">Draft</span>
+  </div>
+  <h1>{{ chk.title }}</h1>
+  {% if chk.description %}<p class="rf-desc">{{ chk.description|linkify }}</p>{% endif %}
+  <dl class="rf-meta">
+    {% if chk.location %}<div><dt>Location</dt><dd>{{ chk.location }}</dd></div>{% endif %}
+    <div><dt>Outcome</dt><dd>{{ rule }}</dd></div>
+    <div><dt>Started</dt><dd>{{ r.started_at|local }}{% if started_by %} · {{ started_by }}{% endif %}</dd></div>
+    <div><dt>Checklist</dt><dd>{{ chk.id }} <code>{{ chk.version }}</code></dd></div>
+  </dl>
+  <div class="rf-progress" aria-live="polite">
+    <div class="rf-bar-track"><span id="rf-bar-fill"></span></div>
+    <span class="rf-count" data-total="{{ n_items.n }}"><strong id="rf-done">0</strong> of {{ n_items.n }} answered</span>
+  </div>
+</header>
+
+{% if errors %}<p class="error rf-alert">{{ errors|length }} item{{ 's' if errors|length != 1 }} still need{{ 's' if errors|length == 1 }} an answer. They're marked in red below; your answers so far are saved.</p>{% endif %}
+{% for e in photo_errors %}<p class="error rf-alert">{{ e }}</p>{% endfor %}
+
+<form method="post" action="/runs/{{ r.id }}" enctype="multipart/form-data" id="run-form" class="run-form">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="anchor" value="">
+<button name="action" value="save" class="default-submit" tabindex="-1" aria-hidden="true">Save</button>
+
+{% for s in chk.sections %}
+<section class="rf-section">
+  <h2>{{ s.title }}</h2>
+  <ol class="rf-items">
+  {% for it in s['items'] %}{% set a = answers.get(it.id, {}) %}{% set err = errors.get(it.id) %}
+    {% if it.kind == 'info' %}
+    <li class="rf-info">{{ it.text|linkify }}</li>
+    {% else %}
+    <li class="rf-item k-{{ it.kind }}{% if err %} has-error{% endif %}" id="i-{{ it.id }}">
+      {% if it.kind in ('check', 'ack') %}
+      <label class="rf-tick">
+        <input type="checkbox" name="v_{{ it.id }}" {% if a.value %}checked{% endif %}>
+        <span class="rf-box" aria-hidden="true"></span>
+        <span class="rf-qtext">{{ it.text|linkify }}{% if it.optional %} <span class="rf-opt">optional</span>{% endif %}</span>
+      </label>
+      {% else %}
+      <div class="rf-q">
+        <span class="rf-qtext">{{ it.text|linkify }}</span>
+        {% if it.optional %}<span class="rf-opt">optional</span>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if it.kind == 'pass' %}
+      <div class="rf-seg" role="radiogroup">
+        {% for v, lbl in [('pass', 'Pass'), ('fail', 'Fail'), ('na', 'N/A')] %}
+        <label class="s-{{ v }}"><input type="radio" name="v_{{ it.id }}" value="{{ v }}" {% if a.value == v %}checked{% endif %}><span>{% if v == 'pass' %}✓ {% elif v == 'fail' %}✕ {% endif %}{{ lbl }}</span></label>
+        {% endfor %}
+      </div>
+      {% elif it.kind == 'num' %}
+      <div class="rf-numrow">
+        <div class="rf-num">
+          <input type="text" inputmode="decimal" name="v_{{ it.id }}" value="{{ a.value or '' }}" autocomplete="off" placeholder="0"
+                 {% if 'min' in it %}data-min="{{ it.min }}"{% endif %} {% if 'max' in it %}data-max="{{ it.max }}"{% endif %}>
+          {% if it.unit %}<span class="rf-unit">{{ it.unit }}</span>{% endif %}
+        </div>
+        {% if 'min' in it or 'max' in it %}<span class="rf-limits">Limits: {{ limits_text(it) }}</span>{% endif %}
+      </div>
+      {% elif it.kind == 'select' %}
+      <div class="rf-chips" role="radiogroup">
+        {% for c in it.choices %}
+        <label{% if c in (it.fail_choices or []) %} class="is-fail"{% endif %}><input type="radio" name="v_{{ it.id }}" value="{{ c }}" {% if a.value == c %}checked{% endif %}><span>{{ c }}</span></label>
+        {% endfor %}
+      </div>
+      {% elif it.kind == 'text' %}
+      <input type="text" name="v_{{ it.id }}" value="{{ a.value or '' }}" maxlength="500" class="rf-input">
+      {% elif it.kind == 'rich' %}
+      <textarea name="v_{{ it.id }}" rows="6" data-rich class="rf-input">{{ a.value or '' }}</textarea>
+      {% endif %}
+
+      {% if it.kind == 'photo' %}
+        {{ photo_block(it.id, 'Take or choose a photo', photos.get(it.id, []), not it.optional) }}
+      {% elif it.photo %}
+        {{ photo_block(it.id, 'Add a photo', photos.get(it.id, []), it.photo == 'required') }}
+      {% endif %}
+
+      {% if it.comment %}
+      <input type="text" name="c_{{ it.id }}" value="{{ a.comment or '' }}" maxlength="500" class="rf-comment"
+             placeholder="{{ 'Comment (required if it fails)' if it.comment == 'on_fail' else 'Add a comment' }}">
+      {% endif %}
+      {% if err %}<p class="field-error">{{ err }}</p>{% endif %}
+      {{ refs(it) }}
+    </li>
+    {% endif %}
+  {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+
+<section class="rf-section">
+  <h2>Comments and photos</h2>
+  <div class="rf-item rf-plain">
+    <p class="rf-hint">Anything else worth recording: conditions, what was done about a problem, who else was there.</p>
+    <textarea name="comments" rows="5" data-rich class="rf-input">{{ r.comments or '' }}</textarea>
+    {{ photo_block('_run', 'Add photos', photos.get('', [])) }}
+  </div>
+</section>
+
+{% if chk.signature_required %}
+<section class="rf-section" id="sign-card">
+  <h2>Sign</h2>
+  <div class="rf-item rf-plain{% if errors._signature %} has-error{% endif %}">
+    <label class="rf-field">Your name
+      <input type="text" name="signed_name" value="{{ r.signed_name or me.name }}" maxlength="120" autocomplete="name" class="rf-input">
+    </label>
+    <div class="rf-field">Signature
+      {% if r.signature %}
+      <div class="sig-saved"><img class="sigimg" src="{{ r.signature }}" alt="Signature"> <button type="button" class="link" id="sig-redo">Sign again</button></div>
+      {% endif %}
+      <div class="sig rf-sig"{% if r.signature %} hidden{% endif %}>
+        <canvas id="sig-canvas" width="600" height="180"></canvas>
+        <span class="rf-sig-hint" aria-hidden="true">Sign here</span>
+        <button type="button" class="link" id="sig-clear">Clear</button>
+      </div>
+    </div>
+    <input type="hidden" name="signature" id="sig-data" value="{{ r.signature or '' }}">
+    {% if errors._signature %}<p class="field-error">{{ errors._signature }}</p>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+<div class="rf-actions">
+  <span class="rf-actions-count"><strong id="rf-done-2">0</strong>/{{ n_items.n }} answered</span>
+  <span class="rf-actions-btns">
+    <button class="btn secondary" name="action" value="save" formnovalidate title="Save and keep editing">Save</button>
+    <button class="btn secondary" name="action" value="save_close" formnovalidate title="Save and go back to the Registry">Save and close</button>
+    <button class="btn" name="action" value="submit">Submit</button>
+  </span>
+</div>
+</form>
+
+<details class="rf-discard">
+  <summary>Discard this draft</summary>
+  <form method="post" action="/runs/{{ r.id }}/discard">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <p class="small">Deletes the answers and photos in this draft. Nothing has been submitted yet.</p>
+    <button class="btn danger">Discard draft</button>
+  </form>
+</details>
+{% endblock %}

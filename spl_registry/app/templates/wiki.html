@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Wiki and bundles{% endblock %}
+{% block bodyclass %}wiki-check{% endblock %}
+{% block content %}
+<h1>Wiki and bundles</h1>
+{% if result and result.error %}<p class="error">{{ result.error }}</p>{% endif %}
+{% if result and result.ok %}<p class="flash">{{ result.ok }}</p>{% endif %}
+<p class="small muted">{{ counts }} loaded. They're started from the <a href="/registry">Registry</a> page.</p>
+{% if wiki_enabled %}
+<section class="card">
+  <h2>Wiki</h2>
+  <p>Inductions and checklists are edited on the wiki. When a record page is approved there, the wiki publishes a new bundle and this app imports it{% if wiki_poll %} within {{ wiki_poll }} minutes{% endif %}.</p>
+  <p class="small muted">Bundle: <code>{{ wiki_url }}</code>{% if wiki_state.checked_at %} · last checked {{ wiki_state.checked_at|local }}{% endif %}</p>
+  {% if wiki_state.message %}<p class="{{ 'error' if wiki_state.status == 'error' else 'small' }}">{{ wiki_state.message }}</p>{% endif %}
+  {% if wiki_pending %}
+  <div class="card" style="border-color:#d97706">
+    <p><strong>A new bundle from the wiki is waiting for confirmation.</strong> It no longer includes
+      {{ wiki_pending.retired|join(', ') }}. Importing it retires {{ 'it' if wiki_pending.retired|length == 1 else 'them' }}: no new sessions or checklists can be started from {{ 'it' if wiki_pending.retired|length == 1 else 'them' }}, and existing records keep the checklist they were done against.</p>
+    <form method="post" action="/inductions/sync/confirm">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="btn">Import and retire</button>
+    </form>
+  </div>
+  {% endif %}
+  <form method="post" action="/inductions/sync">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn">Update Registry</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Upload a bundle</h2>
+  {% if wiki_enabled %}<p>Normally not needed: bundles come from the wiki. Uploading a file here replaces the active inductions and checklists until the wiki publishes a new bundle.</p>
+  {% else %}<p>Upload <code>registry.json</code> (or an older <code>inductions.json</code>) downloaded from the wiki. Or set <code>bundle_url</code> in the add-on options to import bundles from the wiki automatically. Inductions and checklists not in the new bundle are retired; existing records keep the checklist they were signed against.</p>{% endif %}
+  <form method="post" action="/inductions/upload" enctype="multipart/form-data" class="row">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="file" name="file" accept=".json,application/json" required>
+    <button class="btn">Upload</button>
+  </form>
+</section>
+
+
+{% if bundles %}
+<section class="card">
+  <h2>Bundle history</h2>
+  <table>
+    <tr><th>Uploaded</th><th>By</th><th>Built</th><th>Bundle</th></tr>
+    {% for b in bundles %}
+    <tr><td>{{ b.uploaded_at|local }}</td><td>{{ b.by_name or 'Wiki' }}</td><td>{{ b.generated_at|local }}</td><td><code>{{ b.hash }}</code></td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+{% endblock %}

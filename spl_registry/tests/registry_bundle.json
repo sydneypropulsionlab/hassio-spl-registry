@@ -1,0 +1,205 @@
+{
+  "format": 2,
+  "generated_at": "2026-11-12T05:44:30Z",
+  "generator": "splregistry DokuWiki plugin",
+  "inductions": [
+    {
+      "id": "IND_J11_S120_FORM4",
+      "title": "Formlabs Form 4 induction",
+      "location": "J11 S120",
+      "description": "Practical induction on the Formlabs Form 4 resin printer, Form Wash and Form Cure. The assessor covers each item with you and you demonstrate the practical tasks before sign-off.",
+      "refresh_months": 12,
+      "self_service": false,
+      "requires": [],
+      "sources": [],
+      "sections": [
+        {
+          "title": "Before you start",
+          "items": [
+            {
+              "id": "1.1",
+              "kind": "check",
+              "text": "Has read the Form 4 SWP and knows where to find it ()",
+              "refs": []
+            },
+            {
+              "id": "1.2",
+              "kind": "ack",
+              "text": "I will not use the Form 4 unsupervised until this induction is confirmed",
+              "refs": []
+            },
+            {
+              "id": "1.3",
+              "kind": "check",
+              "text": "test",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Demonstrated by the inductee",
+          "items": [
+            {
+              "id": "2.1",
+              "kind": "demo",
+              "text": "Pre-start inspection of the cover, cartridge, tank film and platform ()",
+              "refs": []
+            },
+            {
+              "id": "2.2",
+              "kind": "info",
+              "text": "Information only line",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Emergencies",
+          "items": [
+            {
+              "id": "3.1",
+              "kind": "check",
+              "text": "How to stop a job and isolate the printer ()",
+              "refs": []
+            },
+            {
+              "id": "3.2",
+              "kind": "ack",
+              "text": "I will report any skin irritation, rash, spill or near miss",
+              "refs": []
+            }
+          ]
+        }
+      ],
+      "page": "whs:inductions:ind-003",
+      "type": "equipment",
+      "grants_access": [
+        "Form 4 3D Printers"
+      ],
+      "resources": [
+        {
+          "id": "form-4-3d-printers",
+          "name": "Form 4 3D Printers"
+        }
+      ],
+      "version": "d182de2bbffe",
+      "record_type": "induction",
+      "category": "equipment",
+      "wiki": {
+        "page": "whs:inductions:ind-003",
+        "rev": 1,
+        "version": "1.0",
+        "approved": null,
+        "approved_by": null
+      }
+    }
+  ],
+  "checklists": [
+    {
+      "id": "CHK_UAV_PREFLIGHT",
+      "title": "UAV preflight checklist",
+      "location": "",
+      "description": "Preflight checks before every flight.",
+      "refresh_months": 0,
+      "self_service": false,
+      "requires": [
+        "IND_J11_S120_FORM4"
+      ],
+      "sources": [],
+      "sections": [
+        {
+          "title": "Before you start",
+          "items": [
+            {
+              "id": "1.1",
+              "kind": "select",
+              "text": "Conditions",
+              "refs": [],
+              "choices": [
+                "Clear",
+                "Light rain",
+                "Windy"
+              ],
+              "fail_choices": [
+                "Windy"
+              ],
+              "comment": "optional"
+            },
+            {
+              "id": "1.2",
+              "kind": "text",
+              "text": "Airframe serial",
+              "refs": []
+            }
+          ]
+        },
+        {
+          "title": "Checks",
+          "items": [
+            {
+              "id": "2.1",
+              "kind": "pass",
+              "text": "Props secure, no chips or cracks",
+              "refs": [],
+              "photo": "optional",
+              "comment": "on_fail"
+            },
+            {
+              "id": "2.2",
+              "kind": "num",
+              "text": "Flight battery voltage",
+              "refs": [],
+              "min": 25,
+              "max": 25.2,
+              "unit": "V"
+            },
+            {
+              "id": "2.3",
+              "kind": "num",
+              "text": "GPS satellites",
+              "refs": [],
+              "min": 8,
+              "unit": "sats"
+            },
+            {
+              "id": "2.4",
+              "kind": "check",
+              "text": "RTH altitude set",
+              "refs": []
+            },
+            {
+              "id": "2.5",
+              "kind": "photo",
+              "text": "Airframe overall",
+              "refs": []
+            },
+            {
+              "id": "2.6",
+              "kind": "rich",
+              "text": "Flight log / notes",
+              "refs": [],
+              "optional": true
+            }
+          ]
+        }
+      ],
+      "page": "whs:inductions:chk-001",
+      "signature_required": true,
+      "record_type": "checklist",
+      "category": "Preflight",
+      "outcome": [
+        "Go",
+        "No-go"
+      ],
+      "version": "00544d27c716",
+      "wiki": {
+        "page": "whs:inductions:chk-001",
+        "rev": 1,
+        "version": "1.0",
+        "approved": null,
+        "approved_by": null
+      }
+    }
+  ],
+  "hash": "8bcbcae24177"
+}

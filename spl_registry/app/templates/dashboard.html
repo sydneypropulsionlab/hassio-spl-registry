@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block bodyclass %}wiki-check{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Hello, {{ me.name.split()[0] }}</h1>
+  <a class="btn" href="/registry">Start an induction or checklist</a>
+</div>
+
+<div class="stats">
+  <a class="stat" href="/registry"><span class="num">{{ stats.current }}</span><span class="lbl">Current inductions</span></a>
+  <a class="stat" href="/registry"><span class="num">{{ stats.people }}</span><span class="lbl">People inducted</span></a>
+  <a class="stat" href="/registry"><span class="num">{{ stats.month }}</span><span class="lbl">Completed in the last 30 days</span></a>
+  <a class="stat {% if awaiting %}warn{% endif %}" href="#waiting"><span class="num">{{ awaiting|length }}</span><span class="lbl">Waiting on someone</span></a>
+  <a class="stat {% if expired %}bad{% endif %}" href="#expired"><span class="num">{{ expired|length }}</span><span class="lbl">Expired</span></a>
+  <a class="stat {% if expiring %}warn{% endif %}" href="#expiring"><span class="num">{{ expiring|length }}</span><span class="lbl">Expiring within {{ settings.expiry_warning_days }} days</span></a>
+</div>
+
+{% if wiki_pending %}
+<p class="error wiki-held">A new bundle from the wiki is waiting for confirmation because it would retire {{ wiki_pending.retired|join(', ') }}. <a href="/wiki">Review it on Wiki and bundles</a>.</p>
+{% elif wiki_enabled and wiki_state.status == 'error' %}
+<p class="error">Wiki sync: {{ wiki_state.message }} <a href="/wiki">Wiki and bundles</a></p>
+{% endif %}
+
+{% if recent_runs %}
+<section class="card">
+  <h2>Recent checklists</h2>
+  <table>
+    <tr><th>Submitted</th><th>Checklist</th><th>By</th><th>Outcome</th><th></th></tr>
+    {% for r in recent_runs %}{% set ol = outcome_label(r.outcome, r.outcome_label) %}
+    <tr><td>{{ r.submitted_at|local }}</td><td>{{ r.title }}</td><td>{{ r.submitted_by }}</td>
+      <td><span class="badge {{ ol[1] }}">{{ ol[0] }}</span></td><td><a href="/runs/{{ r.id }}">View</a></td></tr>
+    {% endfor %}
+  </table>
+  <p class="small"><a href="/registry?view=checklists#records">All checklist records</a></p>
+</section>
+{% endif %}
+
+{% if open_sessions %}
+<section class="card">
+  <h2>Open sessions</h2>
+  <table>
+    <tr><th>Induction</th><th>Code</th><th>Started</th><th></th></tr>
+    {% for s in open_sessions %}
+    <tr><td>{{ s.title }}</td><td><code>{{ s.code }}</code></td><td>{{ s.created_at|local }}</td>
+      <td><a href="/sessions/{{ s.id }}">Open</a></td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+
+<section class="card" id="waiting">
+  <h2>Waiting on someone</h2>
+  {% if awaiting %}
+  <table>
+    <tr><th>Person</th><th>Induction</th><th>Status</th><th></th></tr>
+    {% for r in awaiting %}
+    <tr><td>{{ r.person_name }}</td><td>{{ r.title }}</td>
+      <td>{% if r.status == 'inductee_signed' %}<span class="badge info">Ready for sign-off</span>{% else %}<span class="badge warn">Awaiting email confirmation</span>{% endif %}</td>
+      <td><a href="{% if r.status == 'inductee_signed' %}/records/{{ r.id }}/signoff{% else %}/records/{{ r.id }}{% endif %}">Open</a></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Nothing outstanding.</p>{% endif %}
+</section>
+
+<section class="card" id="expired">
+  <h2>Expired</h2>
+  {% if expired %}
+  <table>
+    <tr><th>Person</th><th>Induction</th><th>Expired</th><th></th></tr>
+    {% for r in expired %}
+    <tr class="expired"><td><a href="/people/{{ r.person_id }}">{{ r.person_name }}</a></td><td>{{ r.title }}</td>
+      <td>{{ r.expires_at|date }}</td><td><a href="/records/{{ r.id }}">Record</a></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+
+<section class="card" id="expiring">
+  <h2>Expiring within {{ settings.expiry_warning_days }} days</h2>
+  {% if expiring %}
+  <table>
+    <tr><th>Person</th><th>Induction</th><th>Expires</th><th></th></tr>
+    {% for r in expiring %}
+    <tr><td><a href="/people/{{ r.person_id }}">{{ r.person_name }}</a></td><td>{{ r.title }}</td>
+      <td>{{ r.expires_at|date }}</td><td><a href="/records/{{ r.id }}">Record</a></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+
+<p class="small muted">{{ stats.inductions }} inductions loaded{% if wiki_enabled and wiki_state.checked_at %} · wiki last checked {{ wiki_state.checked_at|local }}{% endif %} · <a href="/wiki">Wiki and bundles</a></p>
+{% endblock %}

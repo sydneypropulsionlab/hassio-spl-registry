@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_status.html" import refs, kindlabel %}
+{% block title %}{{ ind.title }}{% endblock %}
+{% block content %}
+<p class="back noprint"><a href="/registry">&larr; Registry</a></p>
+<h1>{{ ind.title }}</h1>
+<p class="muted">{{ ind.location }} · {{ ind.type|capitalize }} · default refresh {% if ind.refresh_months %}{{ ind.refresh_months }} months{% else %}none{% endif %} · version <code>{{ ind.version }}</code></p>
+{% if ind.description %}<p>{{ ind.description }}</p>{% endif %}
+{% if grants_access(ind) %}<p class="access"><span class="label">Grants access</span> {% for a in grants_access(ind) %}<span class="chip">{{ a }}</span>{% endfor %}</p>{% endif %}
+<p class="small">Sources: {% for s in ind.sources %}{{ s.title }}{% if s.version %} ({{ 'draft' if s.version == 'draft' else 'v' ~ s.version }}){% endif %}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+{% for sec in ind.sections %}
+<section class="card">
+  <h2>{{ sec.title }}</h2>
+  <ul class="checklist">
+  {% for it in sec['items'] %}
+    <li class="item {{ it.kind }}"><span class="who">{{ kindlabel(it.kind) }}</span> {{ it.text|linkify }}{{ refs(it) }}</li>
+  {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% endblock %}
